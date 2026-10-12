@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Runs the lab tests, saves one capture per test in out/captures and checks each expected
-# observation with tshark. Runs as root, in the container or in a distro prepared by setup.sh:
-#   bash lab.sh [ping|telnet|http|ssh|tls13|tls12|fake ...]
+# observation with tshark. Run setup.sh once first, then as root:
+#   sudo bash lab.sh [ping|telnet|http|ssh|tls13|tls12|fake ...]
 # With no argument it starts from scratch and runs every test.
 set -u
 cd "$(dirname "$0")"
@@ -219,7 +219,7 @@ else
   [ -d $OUT ] || setup
 fi
 for t in "$@"; do "t_$t"; done
-# lab.sh runs as root, and out/ must stay readable and removable from the host.
+# lab.sh runs as root, and out/ must stay readable and removable without sudo.
 chmod -R a+rwX $OUT
 echo "$FAILS failure(s)"
 exit $((FAILS > 0))

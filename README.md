@@ -4,31 +4,45 @@ A reproducible lab that compares Telnet, HTTP, SSH and TLS in Wireshark, with an
 
 Cybersecurity project by Mohamed Reguigui and Firas Taktak, due 15 November 2026. The full plan, method and sources are in [PLAN.md](PLAN.md).
 
-Clients, servers and captures share one loopback interface on Debian-family Linux. One command creates the certificates, starts each service, captures the session, then uses TShark to check what is readable and what is not.
+Clients, servers and captures share the loopback interface of a Kali WSL distro. One command creates the certificates, starts each service, captures the session, then uses TShark to check what is readable and what is not.
 
 ## Run it
 
-Pick one route. Both run the same `lab.sh` and print `0 failure(s)` on the last line.
+The lab runs in [Kali under WSL](https://www.kali.org/docs/wsl/wsl-preparations/). Clone the repository on the Windows side, so Wireshark opens `out\` directly and the lab's test account can read the witness file.
 
-**Docker (reference, also used by CI).** Needs [Docker Desktop](https://docs.docker.com/desktop/setup/install/windows-install/) running. The first run builds the image in a few minutes, later runs take about a minute.
+1. Install Kali and Wireshark on Windows, once:
+
+```bash
+wsl --install -d kali-linux
+```
+
+```bash
+winget install WiresharkFoundation.Wireshark
+```
+
+2. Clone the repository from Windows:
 
 ```bash
 git clone https://github.com/ReguiguiMohamed/tls-lab.git
 ```
+
+3. Open Kali in that folder. WSL starts in the current Windows directory:
 
 ```bash
 cd tls-lab
 ```
 
 ```bash
-docker compose run --rm lab
+wsl -d kali-linux
 ```
 
-**Kali or Debian in [WSL](https://learn.microsoft.com/windows/wsl/install).** No Docker needed. `setup.sh` installs the tools and the `labuser` test account once, then the lab runs as root.
+4. Install the tools and the `labuser` test account, once:
 
 ```bash
 sudo bash setup.sh
 ```
+
+5. Run every test. The last line must read `0 failure(s)`, after about 75 seconds:
 
 ```bash
 sudo bash lab.sh
@@ -37,17 +51,7 @@ sudo bash lab.sh
 One or more tests by name:
 
 ```bash
-docker compose run --rm lab bash lab.sh tls13 tls12
-```
-
-```bash
 sudo bash lab.sh tls13 tls12
-```
-
-To open the captures on Windows, install Wireshark:
-
-```bash
-winget install WiresharkFoundation.Wireshark
 ```
 
 ## Tests
@@ -90,13 +94,12 @@ Clear both TLS settings before the next observations, or use one Wireshark profi
 | Path | Content |
 | --- | --- |
 | [`lab.sh`](lab.sh) | Setup, services, captures and checks, one function per test. |
-| [`setup.sh`](setup.sh) | Packages and test account, shared by Docker and Kali. |
-| [`Dockerfile`](Dockerfile), [`compose.yaml`](compose.yaml) | Debian 13 pinned by digest, run without a network. |
+| [`setup.sh`](setup.sh) | Packages and the `labuser` test account. |
 | [`config/`](config/) | `inetd.conf` for Telnet, `sshd_config` for the lab's SSH instance. |
 | [`fixtures/www/`](fixtures/www/) | Witness file `PROJET_TLS_MOHAMED_FIRAS`. |
-| [`.github/workflows/lab.yml`](.github/workflows/lab.yml) | Replays the lab on every push and keeps `out/` as an artifact. |
+| [`.github/workflows/lab.yml`](.github/workflows/lab.yml) | Replays the lab in a Kali image on every push and keeps `out/` as an artifact. |
 | [`AGENTS.md`](AGENTS.md) | Rules for AI assistants. |
 
 ## Built with
 
-OpenSSL, OpenSSH, inetutils telnetd, Python `http.server`, curl, TShark and dumpcap, testssl.sh, all from Debian 13 or Kali packages. Each run records the exact versions in `out/evidence/versions.txt`.
+OpenSSL, OpenSSH, inetutils telnetd, Python `http.server`, curl, TShark and dumpcap, testssl.sh, all from Kali packages. Each run records the exact versions in `out/evidence/versions.txt`.

@@ -25,17 +25,10 @@ These four cases are enough. FTP, old SSL, VPNs and other protocols are not need
 
 ## 3. Architecture
 
-The lab runs on Debian-family Linux, through one of two routes that use the same scripts:
-
-| Route | Command | When to use it |
-| --- | --- | --- |
-| Docker | `docker compose run --rm lab` | Reference. Same image for Mohamed, Firas and GitHub Actions, nothing installed on the system, no network. |
-| Kali WSL | `sudo bash setup.sh` once, then `sudo bash lab.sh` | Already installed on Mohamed's PC, handy for exploring by hand during the defense. |
-
-`setup.sh` holds the package list and the test account, and the `Dockerfile` runs it, so both routes install the same tools. Docker pins the Debian 13 base image and runs without a network. Kali is a rolling distro: its versions move ahead of Debian 13 and the system keeps the packages and the `labuser` account.
+The lab runs in Kali under WSL: `sudo bash setup.sh` once, then `sudo bash lab.sh`. GitHub Actions runs the same two scripts in a Kali image. Kali is a rolling distro, so each run records the tool versions in `out/evidence/versions.txt`.
 
 ```text
-Docker container or Kali WSL, loopback only
+Kali WSL, loopback only
 
 Telnet client -------- TCP/2323 -----> Telnet server
 OpenSSH client ------- TCP/2222 -----> lab OpenSSH instance
@@ -135,7 +128,7 @@ The weakness shown is precise: if the server's private key is compromised, old r
 
 Repeat the comparison with our TLS 1.3 session, which uses an ephemeral exchange: the certificate's private key alone does not allow the same decryption. Use a session without a key log and a clean profile. Test 6 stays separate, because session secrets do allow decryption. [1][4]
 
-OpenSSL 3.5 in the container negotiates suite `0x009c` without lowering its security level. The system-wide configuration is untouched. Cross-check: with the suite ECDHE-RSA-AES128-GCM-SHA256 on the same server, the same private key decrypts nothing.
+OpenSSL in Kali negotiates suite `0x009c` without lowering its security level. The system-wide configuration is untouched. Cross-check: with the suite ECDHE-RSA-AES128-GCM-SHA256 on the same server, the same private key decrypts nothing.
 
 ### Test 8 - Bad certificate verification
 
@@ -188,8 +181,7 @@ A text missing from a capture does not by itself prove the encryption is sound. 
 
 | Path | Content |
 | --- | --- |
-| `setup.sh` | Packages and test account, used by the `Dockerfile` and by Kali. |
-| `Dockerfile`, `compose.yaml` | Container route. |
+| `setup.sh` | Packages and test account. |
 | `lab.sh` | Setup, services, captures and checks. |
 | `config/` | The lab's `inetd.conf` and `sshd_config`. |
 | `fixtures/www/` | Witness file served over HTTP and HTTPS. |
@@ -222,11 +214,9 @@ The four grading items are covered: documented report, clear presentation, worki
 
 ## 13. Status on 12 October 2026
 
-The lab runs in the container and `lab.sh` checks 27 observations, all passing in 57 seconds on Mohamed's PC. Versions recorded in `out/evidence/versions.txt`: OpenSSL 3.5.7, OpenSSH 10.0p1, inetutils-telnetd 2.6, curl 8.14.1, TShark 4.4.19, Python 3.13.5, testssl.sh 3.2.1.
+The lab runs in Kali 2026.2 under WSL and `lab.sh` checks 27 observations, all passing in 73 seconds on Mohamed's PC. Versions recorded in `out/evidence/versions.txt`: OpenSSL 3.6.3, OpenSSH 10.4p1, inetutils-telnetd 2.8, curl 8.21.0, TShark 4.6.6, Python 3.14.7, testssl.sh 3.2.4.
 
-The same checkout passes the same 27 checks natively in Kali 2026.2 under WSL, in 73 seconds, with OpenSSL 3.6.3, TShark 4.6.6, inetutils-telnetd 2.8 and testssl.sh 3.2.4.
-
-Our TLS 1.3 server negotiates `TLS_AES_256_GCM_SHA384` with the post-quantum hybrid group `X25519MLKEM768`, OpenSSL 3.5's default. Wireshark decrypts this session with the key log like the others.
+Our TLS 1.3 server negotiates `TLS_AES_256_GCM_SHA384` with the post-quantum hybrid group `X25519MLKEM768`, OpenSSL's default. Wireshark decrypts this session with the key log like the others.
 
 What remains is human work: annotated Wireshark screenshots, report, slides and rehearsal.
 

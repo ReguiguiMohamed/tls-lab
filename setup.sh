@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Installs the lab tools and the test account on Debian or Kali. The Dockerfile runs it,
-# and so can a Kali or Debian WSL distro: sudo bash setup.sh
+# Installs the lab tools and the test account on Kali, once:
+#   sudo bash setup.sh
 set -eu
 apt-get update
 DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
