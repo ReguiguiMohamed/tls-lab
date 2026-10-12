@@ -1,4 +1,4 @@
-# Rejoue tout le laboratoire sur une machine neuve à chaque push et pull request.
+# Replays the whole lab on a fresh machine for every push and pull request.
 name: Lab
 
 on:
@@ -17,7 +17,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - run: docker compose run --rm lab
-      # Captures, preuves et secrets jetables de cette exécution, à télécharger depuis l'onglet Actions.
+      # Captures, evidence and throwaway secrets of this run, downloadable from the Actions tab.
       - if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:

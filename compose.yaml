@@ -2,7 +2,7 @@ services:
   lab:
     build: .
     image: tls-lab
-    # Sans réseau : le conteneur ne voit que sa boucle locale, aucun paquet ne sort.
+    # No network, so no packet leaves the container.
     network_mode: none
     volumes:
       - .:/lab
