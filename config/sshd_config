@@ -1,0 +1,11 @@
+# Instance OpenSSH propre au laboratoire, distincte de tout sshd du système.
+ListenAddress 127.0.0.1
+Port 2222
+HostKey /tmp/lab-ssh/ssh_host_ed25519_key
+PidFile /tmp/lab-ssh/sshd.pid
+AllowUsers labuser
+PermitRootLogin no
+PasswordAuthentication no
+KbdInteractiveAuthentication no
+PubkeyAuthentication yes
+UsePAM no
