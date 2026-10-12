@@ -1,4 +1,4 @@
-# Replays the whole lab on a fresh machine for every push and pull request.
+# Replays the whole lab on a fresh Kali for every push and pull request.
 name: Lab
 
 on:
@@ -13,10 +13,12 @@ permissions:
 jobs:
   lab:
     runs-on: ubuntu-24.04
+    container: kalilinux/kali-rolling@sha256:02f5d6c019e549b0f55da58e835cad5355ef1030c6b2645265a324e37dfc4acc
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - run: docker compose run --rm lab
+      - run: bash setup.sh
+      - run: bash lab.sh
       # Captures, evidence and throwaway secrets of this run, downloadable from the Actions tab.
       - if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
