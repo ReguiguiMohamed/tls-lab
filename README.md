@@ -1,18 +1,16 @@
-# Du trafic en clair à TLS
+# From cleartext to TLS
 
-Laboratoire reproductible qui compare Telnet, HTTP, SSH et TLS dans Wireshark, avec une vérification automatique de chaque observation.
+A reproducible lab that compares Telnet, HTTP, SSH and TLS in Wireshark, with an automatic check for every observation.
 
-Projet de cybersécurité de Mohamed Reguigui et Firas Taktak, remise le 15 novembre 2026. Le plan complet, la méthode et les sources sont dans [PLAN.md](PLAN.md).
+Cybersecurity project by Mohamed Reguigui and Firas Taktak, due 15 November 2026. The full plan, method and sources are in [PLAN.md](PLAN.md).
 
-Tout tourne dans un conteneur Debian 13 sans réseau : clients, serveurs et captures partagent sa seule interface loopback. Une commande prépare les certificats, lance chaque service, capture la session, puis contrôle avec TShark ce qui est lisible et ce qui ne l'est pas.
+Clients, servers and captures share one loopback interface on Debian-family Linux. One command creates the certificates, starts each service, captures the session, then uses TShark to check what is readable and what is not.
 
-## Démarrage
+## Run it
 
-Prérequis sur Windows : [Docker Desktop](https://www.docker.com/products/docker-desktop/) démarré, et Wireshark pour ouvrir les captures.
+Pick one route. Both run the same `lab.sh` and print `0 failure(s)` on the last line.
 
-```bash
-winget install WiresharkFoundation.Wireshark
-```
+**Docker (reference, also used by CI).** Needs [Docker Desktop](https://docs.docker.com/desktop/setup/install/windows-install/) running. The first run builds the image in a few minutes, later runs take about a minute.
 
 ```bash
 git clone https://github.com/ReguiguiMohamed/tls-lab.git
@@ -26,62 +24,79 @@ cd tls-lab
 docker compose run --rm lab
 ```
 
-La première exécution construit l'image en quelques minutes. Les suivantes prennent environ une minute. La dernière ligne doit afficher `0 échec(s)`.
+**Kali or Debian in [WSL](https://learn.microsoft.com/windows/wsl/install).** No Docker needed. `setup.sh` installs the tools and the `labuser` test account once, then the lab runs as root.
 
-Pour un seul test, ou pour explorer à la main pendant la soutenance :
+```bash
+sudo bash setup.sh
+```
+
+```bash
+sudo bash lab.sh
+```
+
+One or more tests by name:
 
 ```bash
 docker compose run --rm lab bash lab.sh tls13 tls12
 ```
 
 ```bash
-docker compose run --rm lab bash
+sudo bash lab.sh tls13 tls12
+```
+
+To open the captures on Windows, install Wireshark:
+
+```bash
+winget install WiresharkFoundation.Wireshark
 ```
 
 ## Tests
 
-| Test | Ports | Ce que `lab.sh` vérifie |
+| Test | Port | What `lab.sh` checks |
 | --- | --- | --- |
-| `ping` | ICMP | 3 réponses sur `lo`. |
-| `telnet` | 2323 | Identifiant, mot de passe et texte témoin lisibles dans la capture. |
-| `http` | 8080 | Requête `GET` et texte témoin lisibles, fichier reçu identique. |
-| `ssh` | 2222 | Clé d'hôte vérifiée, session ouverte, bannière `SSH-2.0` visible, texte témoin absent. |
-| `tls13` | 8443 | Certificat et nom vérifiés, TLS 1.3 négocié, texte absent sans secrets et avec la seule clé RSA, présent avec le key log. |
-| `tls12` | 8444 | Suite `TLS_RSA_WITH_AES_128_GCM_SHA256`, session passée déchiffrée avec la clé privée du serveur, testssl.sh signale l'absence de forward secrecy. |
-| `fake` | 9443 | Le client qui vérifie refuse le faux certificat et n'envoie rien. Avec `--insecure`, le faux serveur reçoit le texte témoin. |
+| `ping` | ICMP | 3 replies on `lo`. |
+| `telnet` | 2323 | Username, password and witness text readable in the capture. |
+| `http` | 8080 | `GET` request and witness text readable, received file identical. |
+| `ssh` | 2222 | Host key verified, session opened, `SSH-2.0` banner visible, witness text absent. |
+| `tls13` | 8443 | Certificate and name verified, TLS 1.3 negotiated, text absent without secrets and with the RSA key alone, present with the key log. |
+| `tls12` | 8444 | Suite `TLS_RSA_WITH_AES_128_GCM_SHA256`, past session decrypted with the server's private key, testssl.sh reports no forward secrecy. |
+| `fake` | 9443 | The verifying client rejects the fake certificate and sends nothing. With `--insecure`, the fake server receives the witness text. |
 
-Le serveur TLS 1.3 et le serveur TLS 1.2 utilisent la même clé RSA. Elle déchiffre la session TLS 1.2 et pas la session TLS 1.3, ce qui isole l'effet de l'échange RSA statique.
+The TLS 1.3 and TLS 1.2 servers share one RSA key. It decrypts the TLS 1.2 session and not the TLS 1.3 one, which isolates the effect of static RSA key exchange.
 
-## Résultats
+## Output
 
-| Fichier | Contenu |
+| File | Content |
 | --- | --- |
-| `out/results.txt` | Une ligne `PASS` ou `FAIL` par vérification. |
-| `out/captures/*.pcapng` | Une capture originale par test, sans secrets intégrés. |
-| `out/captures/tls13-with-keys.pcapng` | La session TLS 1.3 avec son key log intégré : elle s'ouvre déjà déchiffrée. |
-| `out/evidence/` | Versions des outils, sorties des clients, journal du faux serveur, rapports testssl.sh. |
-| `out/secrets/` | CA, clés et key log jetables du laboratoire, régénérés à chaque exécution. |
+| `out/results.txt` | One `PASS` or `FAIL` line per check. |
+| `out/captures/*.pcapng` | One original capture per test, without embedded secrets. |
+| `out/captures/tls13-with-keys.pcapng` | The TLS 1.3 session with its key log embedded, so it opens already decrypted. |
+| `out/evidence/` | Tool versions, client outputs, fake server log, testssl.sh reports. |
+| `out/secrets/` | The lab's throwaway CA, keys and key log, regenerated on every run. |
 
-## Wireshark sous Windows
+## Wireshark on Windows
 
-1. **Telnet et HTTP.** Ouvrir la capture, clic droit sur un paquet, Follow, TCP Stream.
-2. **TLS 1.3 sans secrets.** Ouvrir `tls13.pcapng` : handshake visible, Application Data illisible.
-3. **TLS 1.3 avec secrets.** Ouvrir `tls13-with-keys.pcapng`, ou régler Edit, Preferences, Protocols, TLS, (Pre)-Master-Secret log filename sur `out\secrets\tls13.keys`.
-4. **TLS 1.2 RSA statique.** Dans Edit, Preferences, Protocols, TLS, RSA keys list, ajouter `out\secrets\server.key`, puis ouvrir `tls12-rsa.pcapng`.
+These steps follow the [Wireshark TLS wiki](https://wiki.wireshark.org/TLS/).
 
-Vider ces deux réglages TLS avant les observations suivantes, ou utiliser un profil Wireshark par test.
+1. **Telnet and HTTP.** Open the capture, right-click a packet, Follow, TCP Stream.
+2. **TLS 1.3 without secrets.** Open `tls13.pcapng`: handshake visible, Application Data unreadable.
+3. **TLS 1.3 with secrets.** Open `tls13-with-keys.pcapng`, or set Edit, Preferences, Protocols, TLS, (Pre)-Master-Secret log filename to `out\secrets\tls13.keys`.
+4. **TLS 1.2 static RSA.** In Edit, Preferences, Protocols, TLS, RSA keys list, add `out\secrets\server.key`, then open `tls12-rsa.pcapng`.
 
-## Dépôt
+Clear both TLS settings before the next observations, or use one Wireshark profile per test.
 
-| Chemin | Contenu |
+## Repository
+
+| Path | Content |
 | --- | --- |
-| [`lab.sh`](lab.sh) | Préparation, services, captures et vérifications. |
-| [`Dockerfile`](Dockerfile), [`compose.yaml`](compose.yaml) | Environnement Debian 13 épinglé par digest, lancé sans réseau. |
-| [`config/`](config/) | `inetd.conf` pour Telnet, `sshd_config` de l'instance SSH du laboratoire. |
-| [`fixtures/www/`](fixtures/www/) | Fichier témoin `PROJET_TLS_MOHAMED_FIRAS`. |
-| [`.github/workflows/lab.yml`](.github/workflows/lab.yml) | Rejoue le laboratoire à chaque push et publie `out/` en artefact. |
-| [`AGENTS.md`](AGENTS.md) | Règles pour les assistants IA. |
+| [`lab.sh`](lab.sh) | Setup, services, captures and checks, one function per test. |
+| [`setup.sh`](setup.sh) | Packages and test account, shared by Docker and Kali. |
+| [`Dockerfile`](Dockerfile), [`compose.yaml`](compose.yaml) | Debian 13 pinned by digest, run without a network. |
+| [`config/`](config/) | `inetd.conf` for Telnet, `sshd_config` for the lab's SSH instance. |
+| [`fixtures/www/`](fixtures/www/) | Witness file `PROJET_TLS_MOHAMED_FIRAS`. |
+| [`.github/workflows/lab.yml`](.github/workflows/lab.yml) | Replays the lab on every push and keeps `out/` as an artifact. |
+| [`AGENTS.md`](AGENTS.md) | Rules for AI assistants. |
 
-## Construit avec
+## Built with
 
-OpenSSL 3.5, OpenSSH 10.0, inetutils telnetd 2.6, Python `http.server`, curl 8.14, TShark et dumpcap 4.4, testssl.sh 3.2, Debian 13.
+OpenSSL, OpenSSH, inetutils telnetd, Python `http.server`, curl, TShark and dumpcap, testssl.sh, all from Debian 13 or Kali packages. Each run records the exact versions in `out/evidence/versions.txt`.

@@ -1,241 +1,249 @@
-# Du trafic en clair à TLS : comparaison pratique des communications client-serveur
+# From cleartext to TLS: a hands-on comparison of client-server traffic
 
-**Binôme : Mohamed et Firas. Remise : 15 novembre 2026.**
+**Team: Mohamed and Firas. Due: 15 November 2026.**
 
-Ce document remplace les précédents plans SilentTrace. Le projet suit la nouvelle consigne du professeur : établir des communications client-serveur, les examiner dans Wireshark, montrer les données exposées par les protocoles non chiffrés et expliquer les protections, les conditions d'utilisation et les limites de TLS. Le machine learning, le padding et le cover traffic sortent du projet.
+This document replaces the earlier SilentTrace plans. The project follows the professor's new brief: set up client-server communications, examine them in Wireshark, show what unencrypted protocols expose, and explain the protections, conditions of use and limits of TLS. Machine learning, padding and cover traffic are out of scope.
 
-## 1. Le scénario
+## 1. Scenario
 
-Mohamed et Firas utilisent un client pour se connecter à un serveur de laboratoire et échanger un texte fictif identifiable, par exemple `PROJET_TLS_MOHAMED_FIRAS`. Ils réalisent d'abord une session Telnet et une requête HTTP. Wireshark permet de retrouver les données en clair. Ils répètent ensuite les échanges avec SSH et HTTPS utilisant TLS 1.3, puis examinent ce qui reste visible : adresses, ports, négociation et volumes. La partie principale porte sur TLS : certificat vérifié, handshake, chiffrement des données, déchiffrement autorisé avec des secrets de session, et conséquences d'une mauvaise configuration ou de la compromission d'une clé dans une ancienne configuration.
+Mohamed and Firas use a client to connect to a lab server and exchange an identifiable fake text, `PROJET_TLS_MOHAMED_FIRAS`. They first run a Telnet session and an HTTP request, and Wireshark recovers the data in clear. They then repeat the exchanges with SSH and with HTTPS over TLS 1.3, and look at what stays visible: addresses, ports, negotiation and volumes. The main part covers TLS: verified certificate, handshake, data encryption, authorized decryption with session secrets, and what follows from a bad configuration or from a key compromised under an old configuration.
 
-Nous utilisons les implémentations existantes. Notre travail consiste à préparer un laboratoire reproductible, commenter les configurations, réaliser les tests et expliquer les captures.
+We use existing implementations. Our work is a reproducible lab, commented configurations, the tests, and an explanation of the captures.
 
-## 2. Les protocoles retenus
+## 2. Protocols
 
-| Communication | But pratique | Observation attendue |
+| Communication | Practical goal | Expected observation |
 | --- | --- | --- |
-| Telnet classique | Ouvrir une session avec un compte temporaire de laboratoire et envoyer le texte témoin. | Identifiants et commandes peuvent être reconstitués en clair dans le flux. |
-| HTTP | Télécharger un petit fichier texte depuis un serveur local. | Méthode, chemin, en-têtes et contenu lisibles. |
-| SSH | Ouvrir une session avec OpenSSH et afficher le même texte témoin. | Identification initiale et négociation visibles, contenu de session chiffré. |
-| HTTPS / TLS 1.3 | Télécharger le fichier par une connexion authentifiée et chiffrée. | Handshake et trafic TLS visibles, contenu HTTP inaccessible au simple observateur sans secrets. |
+| Classic Telnet | Log in with a temporary lab account and send the witness text. | Credentials and commands can be rebuilt in clear from the stream. |
+| HTTP | Download a small text file from a local server. | Method, path, headers and content readable. |
+| SSH | Open a session with OpenSSH and print the same witness text. | Initial identification and negotiation visible, session content encrypted. |
+| HTTPS / TLS 1.3 | Download the file over an authenticated, encrypted connection. | Handshake and TLS traffic visible, HTTP content out of reach for a plain observer without secrets. |
 
-Telnet et SSH servent à comparer l'accès distant. HTTP et HTTPS servent à comparer le même usage applicatif avec et sans TLS. TLS est une couche de protection, pas une application équivalente à Telnet. SSH moderne est aussi un protocole sécurisé : il ne sera pas présenté comme faible.
+Telnet and SSH compare remote access. HTTP and HTTPS compare the same application use with and without TLS. TLS is a protection layer, not an application on par with Telnet. Modern SSH is a secure protocol too, and we will not present it as weak.
 
-Ces quatre cas suffisent. FTP, anciens SSL, VPN et autres protocoles ne sont pas nécessaires pour terminer le projet.
+These four cases are enough. FTP, old SSL, VPNs and other protocols are not needed to finish the project.
 
-## 3. Architecture retenue
+## 3. Architecture
 
-Utiliser un conteneur Docker Debian 13, construit depuis le `Dockerfile` du dépôt et lancé sans réseau (`network_mode: none`). Le client et les serveurs sont des processus distincts dans ce conteneur. Le même conteneur tourne à l'identique chez Mohamed, chez Firas et dans GitHub Actions. Sur Windows, seuls Docker Desktop et Wireshark sont nécessaires.
+The lab runs on Debian-family Linux, through one of two routes that use the same scripts:
 
-Ubuntu ou Kali dans WSL auraient demandé, sur chaque machine, d'installer les paquets, de créer le compte de test et de lancer sshd et inetd à la main, avec des versions qui divergent. Kali n'apporte rien ici : tous les outils du projet sont dans Debian.
+| Route | Command | When to use it |
+| --- | --- | --- |
+| Docker | `docker compose run --rm lab` | Reference. Same image for Mohamed, Firas and GitHub Actions, nothing installed on the system, no network. |
+| Kali WSL | `sudo bash setup.sh` once, then `sudo bash lab.sh` | Already installed on Mohamed's PC, handy for exploring by hand during the defense. |
+
+`setup.sh` holds the package list and the test account, and the `Dockerfile` runs it, so both routes install the same tools. Docker pins the Debian 13 base image and runs without a network. Kali is a rolling distro: its versions move ahead of Debian 13 and the system keeps the packages and the `labuser` account.
 
 ```text
-Conteneur tls-lab - Debian 13, sans réseau
+Docker container or Kali WSL, loopback only
 
-Client Telnet -------- TCP/2323 -----> serveur Telnet
-Client OpenSSH ------- TCP/2222 -----> instance OpenSSH du laboratoire
-Client curl ---------- TCP/8080 -----> serveur HTTP
-Client OpenSSL ------- TCP/8443 -----> serveur HTTPS / TLS 1.3
-Client OpenSSL ------- TCP/8444 -----> serveur TLS 1.2 / RSA statique
-Client de test ------- TCP/9443 -----> faux serveur avec certificat non approuvé
+Telnet client -------- TCP/2323 -----> Telnet server
+OpenSSH client ------- TCP/2222 -----> lab OpenSSH instance
+curl client ---------- TCP/8080 -----> HTTP server
+OpenSSL client ------- TCP/8443 -----> HTTPS / TLS 1.3 server
+OpenSSL client ------- TCP/8444 -----> TLS 1.2 / static RSA server
+Test client ---------- TCP/9443 -----> fake server with an untrusted certificate
 
-                 Capture sur l'interface loopback
+                 Capture on the loopback interface
                                |
-                         fichiers PCAPNG
+                         PCAPNG files
                                |
-                    analyse dans Wireshark
+                    analysis in Wireshark
 ```
 
-Faire écouter les services sur `127.0.0.1`. Utiliser des ports élevés pour limiter les conflits. La capture loopback observe des échanges TCP réels sur le même ordinateur. Le rapport doit le préciser, sans présenter cette topologie comme une interception sur un réseau externe.
+Services listen on `127.0.0.1` on high ports to avoid conflicts. The loopback capture observes real TCP exchanges on the same computer. The report must say so, and must not present this topology as interception on an external network.
 
-La capture se fait dans le conteneur avec dumpcap. Les fichiers arrivent dans `out/captures/` et s'ouvrent dans Wireshark sous Windows. Wireshark Windows ne voit pas la boucle locale du conteneur.
+dumpcap captures inside the Linux side. Files land in `out/captures/` and open in Wireshark on Windows, which cannot see the Linux loopback itself.
 
-Le compte de test `labuser` est sans privilèges, avec un mot de passe fictif. Les configurations Telnet et SSH sont propres au laboratoire. Les services s'arrêtent avec le conteneur, aucun script d'arrêt n'est nécessaire.
+The `labuser` test account has no privileges and a fake password. The Telnet and SSH configurations belong to the lab. `lab.sh` starts each service for its test and stops it afterwards.
 
-## 4. Outils et rôle exact
+## 4. Tools and their exact role
 
-| Outil | Utilisation |
+| Tool | Use |
 | --- | --- |
-| Wireshark | Examiner les protocoles, suivre les flux et déchiffrer TLS lorsque les secrets nécessaires sont fournis. |
-| dumpcap et TShark | Enregistrer les échanges dans le conteneur et vérifier automatiquement chaque observation. |
-| OpenSSL | Générer les certificats de test et établir les connexions TLS avec `s_server` et `s_client`. |
-| OpenSSH | Fournir une véritable session SSH, avec vérification de la clé du serveur. |
-| inetutils telnet et telnetd, lancé par inetd | Fournir une véritable session Telnet classique, sans la remplacer par un simple socket TCP. |
-| Python `http.server` | Servir le fichier témoin par HTTP. |
-| curl | Tester HTTP et HTTPS avec vérification du certificat. |
-| testssl.sh | Vérifier les versions et suites proposées par nos seuls serveurs TLS. C'est un outil d'audit, pas de déchiffrement. |
+| Wireshark | Examine the protocols, follow streams and decrypt TLS when given the needed secrets. |
+| dumpcap and TShark | Record the exchanges and check every observation automatically. |
+| OpenSSL | Generate the test certificates and run TLS connections with `s_server` and `s_client`. |
+| OpenSSH | Provide a real SSH session, with host key verification. |
+| inetutils telnet and telnetd, started by inetd | Provide a real classic Telnet session rather than a bare TCP socket. |
+| Python `http.server` | Serve the witness file over HTTP. |
+| curl | Test HTTP and HTTPS with certificate verification. |
+| testssl.sh | Check the versions and suites offered by our own TLS servers. It audits, it does not decrypt. |
 
-Utiliser les versions installées et enregistrer leur numéro. Si testssl.sh impose trop de dépendances, les négociations forcées avec OpenSSL suffisent pour vérifier nos profils. Aucun code cryptographique maison n'est requis.
+We use the installed versions and record them. No home-made cryptographic code is needed.
 
-## 5. Lecture, décodage et déchiffrement
+## 5. Reading, decoding and decrypting
 
-Ces distinctions doivent apparaître dans le rapport et à l'oral :
+The report and the defense must keep these apart:
 
-- **Telnet et HTTP classiques : lecture en clair.** Wireshark reconstitue des données qui n'étaient pas chiffrées. Ce n'est pas une attaque cryptographique.
-- **Base64 : décodage.** Si nous montrons un exemple HTTP Basic, retrouver `utilisateur:mot_de_passe` signifie décoder un encodage, pas casser un chiffrement. Cet exemple n'est pas nécessaire au noyau.
-- **TLS avec secrets fournis : déchiffrement autorisé.** Wireshark dispose de données secrètes issues d'un endpoint du laboratoire.
-- **TLS avec RSA statique et clé privée compromise : déchiffrement rétrospectif.** Cette démonstration montre l'absence de forward secrecy de cette configuration.
+- **Classic Telnet and HTTP: reading in clear.** Wireshark rebuilds data that was never encrypted. This is not a cryptographic attack.
+- **Base64: decoding.** If we show an HTTP Basic example, recovering `user:password` means decoding an encoding, not breaking encryption. The core does not need this example.
+- **TLS with provided secrets: authorized decryption.** Wireshark is given secret data from a lab endpoint.
+- **TLS with static RSA and a compromised private key: retrospective decryption.** This shows that configuration lacks forward secrecy.
 
-Nous ne promettons pas de casser TLS moderne ou SSH en observant seulement une capture. [1][2]
+We do not claim to break modern TLS or SSH from a capture alone. [1][2]
 
-## 6. Déroulement des manipulations
+## 6. Tests
 
-### Test 1 - Connectivité et capture
+### Test 1 - Connectivity and capture
 
-Lancer `ping 127.0.0.1` dans le conteneur. Identifier l'interface loopback et enregistrer une première capture. Vérifier que le fichier s'ouvre dans Wireshark et que les paquets du bon port sont présents. Ping prouve la connectivité locale, pas la sécurité.
+Run `ping 127.0.0.1`. Identify the loopback interface and record a first capture. Check that the file opens in Wireshark and that the packets are there. Ping proves local connectivity, not security.
 
-### Test 2 - Telnet : retrouver les données exposées
+### Test 2 - Telnet: recover the exposed data
 
-Lancer une instance Telnet locale, se connecter avec le compte temporaire et afficher le texte témoin. Capturer la connexion complète. Utiliser Follow TCP Stream pour reconstituer les échanges, notamment les saisies réparties sur plusieurs paquets.
+Start a local Telnet instance, log in with the temporary account and print the witness text. Capture the whole connection. Use Follow TCP Stream to rebuild the exchange, including input split over several packets.
 
-Livrer une capture annotée du login et du texte témoin. Vérifier réellement leur présence avant de conclure. Un mot de passe masqué dans le terminal n'est pas nécessairement protégé sur le réseau.
+Deliver an annotated capture of the login and the witness text. Check that they are really there before concluding. A password hidden in the terminal is not necessarily protected on the network.
 
-### Test 3 - HTTP : retrouver la requête et le fichier
+### Test 3 - HTTP: recover the request and the file
 
-Lancer le serveur HTTP dans un dossier ne contenant que le fichier de démonstration. Télécharger ce fichier avec curl. Montrer la méthode GET, le chemin demandé, la réponse et le texte témoin.
+Start the HTTP server in a folder that holds only the demo file. Download it with curl. Show the GET method, the requested path, the response and the witness text.
 
-Livrer une capture et une vérification que le fichier reçu correspond au fichier envoyé.
+Deliver a capture and a check that the received file matches the sent file.
 
-### Test 4 - SSH : observer une session protégée
+### Test 4 - SSH: observe a protected session
 
-Lancer une instance OpenSSH avec un fichier de configuration du projet, sur le port 2222. Comparer l'empreinte de sa clé avec celle annoncée au client avant de l'accepter. Ouvrir la session et afficher le texte témoin.
+Start an OpenSSH instance with the project's configuration file on port 2222. Compare its key fingerprint with the one presented to the client before accepting it. Open the session and print the witness text.
 
-Montrer l'identification du protocole, la négociation et les paquets chiffrés. Expliquer que TLS et SSH utilisent des mécanismes différents. Le protocole SSH peut être sécurisé sans certificat X.509. Nous ne tentons pas de déchiffrer cette session SSH. [2]
+Show the protocol identification, the negotiation and the encrypted packets. Explain that TLS and SSH use different mechanisms. SSH can be secure without an X.509 certificate. We do not try to decrypt this SSH session. [2]
 
-### Test 5 - TLS 1.3 : le cas principal
+### Test 5 - TLS 1.3: the main case
 
-Créer un certificat local avec un Subject Alternative Name adapté à `localhost`, puis le déclarer explicitement comme certificat de confiance du client pour le laboratoire. Ne pas modifier le magasin de confiance global de Windows.
+Create a local certificate with a Subject Alternative Name for `localhost`, then declare it explicitly as the client's trusted certificate for the lab. Do not touch the global Windows trust store.
 
-Servir le même fichier par HTTPS avec OpenSSL. Le client vérifie à la fois la confiance du certificat et le nom du serveur. Avec `s_client`, activer explicitement `-verify_return_error` et `-verify_hostname localhost`, avec le fichier de confiance approprié : sans ces précautions, l'outil de diagnostic peut continuer après une erreur de vérification. [3]
+Serve the same file over HTTPS with OpenSSL. The client checks both the certificate's trust and the server name. With `s_client`, enable `-verify_return_error` and `-verify_hostname localhost` with the right trust file: without them, the diagnostic tool can carry on after a verification error. [3]
 
-Capturer la connexion dès son ouverture. Montrer ClientHello, ServerHello, la version réellement négociée et la suite cryptographique. En TLS 1.3, une partie du handshake, dont le certificat du serveur, est chiffrée. Ne pas promettre de lire ce certificat dans la capture passive : l'afficher côté client ou après le déchiffrement autorisé du test suivant. [4]
+Capture the connection from its start. Show ClientHello, ServerHello, the negotiated version and cipher suite. In TLS 1.3 part of the handshake, including the server certificate, is encrypted. Do not promise to read that certificate in the passive capture: show it on the client side or after the authorized decryption of the next test. [4]
 
-Vérifier la réception correcte du fichier. Avec un profil Wireshark sans clés et une capture sans secrets intégrés, le texte témoin n'est pas lisible dans les données applicatives.
+Check that the file arrives intact. With a Wireshark profile without keys and a capture without embedded secrets, the witness text is not readable in the application data.
 
-### Test 6 - Wireshark déchiffre TLS avec les secrets de session
+### Test 6 - Wireshark decrypts TLS with the session secrets
 
-Créer une nouvelle session TLS 1.3 avec l'option OpenSSL `-keylogfile`. Importer le fichier de secrets dans le profil TLS de Wireshark et retrouver la requête ainsi que le contenu du fichier.
+Create a new TLS 1.3 session with the OpenSSL `-keylogfile` option. Load the secrets file in Wireshark's TLS settings and recover the request and the file content.
 
-Présenter les deux vues : sans secrets puis avec secrets. La conclusion est que la sécurité dépend aussi de la protection des endpoints et des secrets de session. Ce test ne montre pas une faiblesse du chiffrement TLS. [1][3]
+Show both views: without secrets, then with secrets. The conclusion is that security also depends on protecting the endpoints and the session secrets. This test does not show a weakness in TLS encryption. [1][3]
 
-Conserver la capture originale sans secrets intégrés. Séparer les profils Wireshark afin que les clés d'un test ne faussent pas les observations suivantes. Les clés de démonstration restent clairement identifiées comme secrets jetables du laboratoire.
+Keep the original capture without embedded secrets. Use separate Wireshark profiles so one test's keys do not skew the next observations. The demo keys stay clearly marked as throwaway lab secrets.
 
-### Test 7 - Ancienne configuration TLS : absence de forward secrecy
+### Test 7 - Old TLS configuration: no forward secrecy
 
-Lancer un serveur dédié TLS 1.2 avec certificat RSA et échange de clés **RSA statique**, par exemple la suite OpenSSL `AES128-GCM-SHA256`, soit `TLS_RSA_WITH_AES_128_GCM_SHA256`. Forcer la même suite côté client et vérifier la négociation effective. [1][3]
+Start a dedicated TLS 1.2 server with an RSA certificate and **static RSA** key exchange, the OpenSSL suite `AES128-GCM-SHA256`, that is `TLS_RSA_WITH_AES_128_GCM_SHA256`. Force the same suite on the client and check the suite that gets negotiated. [1][3]
 
-Capturer une nouvelle connexion complète, sans reprise de session et sans exporter ses secrets. Fournir ensuite à Wireshark la clé privée RSA du serveur. Retrouver le contenu de cette session passée.
+Capture a new complete connection, with no session resumption and no exported secrets. Then give Wireshark the server's RSA private key and recover the content of that past session.
 
-La faiblesse montrée est précise : si la clé privée du serveur est compromise, les anciennes sessions enregistrées peuvent être déchiffrées dans cette configuration. Ce n'est pas une cassure d'AES et ce n'est pas vrai de toutes les configurations TLS 1.2. Une suite TLS 1.2 utilisant ECDHE n'a pas cette même propriété. [1]
+The weakness shown is precise: if the server's private key is compromised, old recorded sessions can be decrypted under this configuration. This does not break AES, and it is not true of every TLS 1.2 configuration. A TLS 1.2 suite using ECDHE does not share this property. [1]
 
-Refaire la comparaison avec notre session TLS 1.3 utilisant un échange éphémère : la seule clé privée du certificat ne permet pas le même déchiffrement. Utiliser une session sans key log et un profil propre. Le test 6 reste distinct, car les secrets de session permettent, eux, le déchiffrement. [1][4]
+Repeat the comparison with our TLS 1.3 session, which uses an ephemeral exchange: the certificate's private key alone does not allow the same decryption. Use a session without a key log and a clean profile. Test 6 stays separate, because session secrets do allow decryption. [1][4]
 
-OpenSSL 3.5 du conteneur négocie la suite `0x009c` sans abaisser son niveau de sécurité. La configuration globale du système n'est pas modifiée. Contrôle croisé : avec la suite ECDHE-RSA-AES128-GCM-SHA256 sur le même serveur, la même clé privée ne déchiffre plus rien.
+OpenSSL 3.5 in the container negotiates suite `0x009c` without lowering its security level. The system-wide configuration is untouched. Cross-check: with the suite ECDHE-RSA-AES128-GCM-SHA256 on the same server, the same private key decrypts nothing.
 
-### Test 8 - Mauvaise vérification du certificat
+### Test 8 - Bad certificate verification
 
-Lancer un faux serveur local avec un autre certificat qui n'appartient pas à la confiance du client. Le client correctement configuré doit refuser la connexion avant d'envoyer la donnée témoin.
+Start a local fake server with another certificate outside the client's trust. A correctly configured client must refuse the connection before sending the witness data.
 
-Répéter avec la vérification volontairement désactivée, par exemple `curl --insecure`, uniquement vers ce serveur de laboratoire. Montrer que le faux serveur reçoit alors le texte de test, malgré le chiffrement de la connexion. Revenir ensuite au client qui vérifie le certificat et montrer le refus.
+Repeat with verification deliberately turned off, `curl --insecure`, only against this lab server. Show that the fake server then receives the test text, even though the connection is encrypted. Then go back to the verifying client and show the refusal.
 
-La conclusion est que le chiffrement seul ne garantit pas l'identité du destinataire. Ce test illustre le risque d'usurpation lorsque la vérification est désactivée. Sans proxy transparent ni redirection réseau, nous le présentons comme un test de faux serveur, pas comme une interception MITM complète. [5]
+The conclusion is that encryption alone does not guarantee who the recipient is. This test shows the impersonation risk when verification is off. Without a transparent proxy or network redirection, we present it as a fake server test, not as a full MITM interception. [5]
 
-## 7. Ce que nous expliquerons sur TLS
+## 7. What we will explain about TLS
 
-**Points forts :** confidentialité du contenu, intégrité des données, authentification du serveur lorsque le certificat et son nom sont correctement vérifiés, et forward secrecy dans notre profil TLS 1.3 avec échange éphémère. TLS 1.3 exclut notamment l'échange RSA statique. [4]
+**Strengths:** content confidentiality, data integrity, server authentication when the certificate and its name are verified correctly, and forward secrecy in our TLS 1.3 profile with ephemeral exchange. TLS 1.3 drops static RSA key exchange. [4]
 
-**Conditions et limites :** un endpoint voit les données qu'il traite, des secrets de session divulgués permettent leur déchiffrement, une vérification de certificat désactivée retire une protection essentielle, et le chiffrement ne masque pas toutes les métadonnées réseau.
+**Conditions and limits:** an endpoint sees the data it handles, leaked session secrets allow decryption, disabled certificate verification removes an essential protection, and encryption does not hide all network metadata.
 
-Un certificat RSA n'implique pas forcément un échange RSA statique. RSA peut servir à signer le handshake alors qu'ECDHE établit les secrets. Nous devons savoir distinguer ces deux rôles.
+An RSA certificate does not imply static RSA key exchange. RSA can sign the handshake while ECDHE sets up the secrets. We must tell these two roles apart.
 
-Nous ne qualifions pas TLS 1.3 correctement configuré de « faible ». Nous montrons les différences entre un protocole en clair, un ancien choix cryptographique et une mauvaise utilisation d'un protocole moderne.
+We do not call a correctly configured TLS 1.3 "weak". We show the differences between a cleartext protocol, an old cryptographic choice and the misuse of a modern protocol.
 
-## 8. Répartition du travail
+## 8. Split of work
 
 | Mohamed | Firas |
 | --- | --- |
-| Préparer les profils OpenSSL et les certificats locaux. | Préparer la capture et les profils Wireshark. |
-| Mettre en place TLS 1.3, TLS 1.2 RSA statique et le faux serveur. | Mettre en place Telnet, HTTP et l'instance SSH, avec configurations isolées. |
-| Vérifier les clients, les certificats et la livraison des fichiers. | Annoter les captures et réaliser les déchiffrements Wireshark. |
-| Rédiger architecture, fonctionnement de TLS et explication des configurations. | Rédiger comparaison des protocoles, résultats, screenshots et limites. |
+| Prepare the OpenSSL profiles and local certificates. | Prepare the capture and the Wireshark profiles. |
+| Set up TLS 1.3, TLS 1.2 static RSA and the fake server. | Set up Telnet, HTTP and the SSH instance with isolated configurations. |
+| Check the clients, certificates and file delivery. | Annotate the captures and perform the Wireshark decryptions. |
+| Write the architecture, how TLS works and the configuration notes. | Write the protocol comparison, results, screenshots and limits. |
 
-Ensemble : vérifier chaque manipulation, construire le tableau final, préparer les slides et échanger les rôles avant la soutenance. Aucun membre ne doit dépendre de l'autre pour expliquer un test.
+Together: check every test, build the final table, prepare the slides and swap roles before the defense. Neither member should depend on the other to explain a test.
 
-## 9. Preuves à conserver
+## 9. Evidence to keep
 
-Pour chaque test : commande utilisée, configuration, version des outils, capture complète, screenshot utile et résultat observé. Les colonnes « observé » restent vides tant que la manipulation n'a pas été réalisée.
+For each test: command, configuration, tool versions, full capture, a useful screenshot and the observed result. The "observed" columns stay empty until the test has been run.
 
-| Test | Résultat attendu | Preuve |
+| Test | Expected result | Evidence |
 | --- | --- | --- |
-| Ping | Réponse locale. | Screenshot du terminal. |
-| Telnet | Données du laboratoire lisibles. | Flux TCP reconstitué. |
-| HTTP | Requête et fichier lisibles. | Capture HTTP annotée. |
-| SSH | Session fonctionnelle, contenu chiffré. | Terminal et capture SSH. |
-| TLS 1.3 vérifié | Connexion acceptée et fichier correct. | Vérification client et capture sans secrets. |
-| TLS 1.3 + key log | Contenu déchiffré avec secrets fournis. | Même session avant et après import des secrets. |
-| TLS 1.2 RSA statique | Ancienne session déchiffrée avec clé privée du serveur. | Suite négociée, capture et résultat Wireshark. |
-| Faux certificat, vérification active | Connexion refusée. | Erreur client et absence de réception du texte témoin. |
-| Faux certificat, vérification désactivée | Donnée reçue par le faux serveur. | Sortie client et réception côté serveur. |
+| Ping | Local reply. | Terminal screenshot. |
+| Telnet | Lab data readable. | Rebuilt TCP stream. |
+| HTTP | Request and file readable. | Annotated HTTP capture. |
+| SSH | Working session, encrypted content. | Terminal and SSH capture. |
+| Verified TLS 1.3 | Connection accepted, file correct. | Client verification and capture without secrets. |
+| TLS 1.3 + key log | Content decrypted with provided secrets. | Same session before and after loading the secrets. |
+| TLS 1.2 static RSA | Old session decrypted with the server's private key. | Negotiated suite, capture and Wireshark result. |
+| Fake certificate, verification on | Connection refused. | Client error and no witness text received. |
+| Fake certificate, verification off | Data received by the fake server. | Client output and server-side reception. |
 
-L'absence d'un texte dans une capture ne prouve pas à elle seule la solidité du chiffrement. Nous la relions à la configuration négociée et au fonctionnement documenté du protocole.
+A text missing from a capture does not by itself prove the encryption is sound. We tie it to the negotiated configuration and to the documented behavior of the protocol.
 
-## 10. Organisation des fichiers
+## 10. Files
 
-| Chemin | Contenu |
+| Path | Content |
 | --- | --- |
-| `Dockerfile`, `compose.yaml` | Environnement du laboratoire. |
-| `lab.sh` | Préparation, services, captures et vérifications. |
-| `config/` | `inetd.conf` et `sshd_config` du laboratoire. |
-| `fixtures/www/` | Fichier témoin servi par HTTP et HTTPS. |
-| `out/` | Généré à chaque exécution, exclu du dépôt : `secrets/`, `captures/`, `evidence/`, `results.txt`. |
+| `setup.sh` | Packages and test account, used by the `Dockerfile` and by Kali. |
+| `Dockerfile`, `compose.yaml` | Container route. |
+| `lab.sh` | Setup, services, captures and checks. |
+| `config/` | The lab's `inetd.conf` and `sshd_config`. |
+| `fixtures/www/` | Witness file served over HTTP and HTTPS. |
+| `out/` | Generated by each run, kept out of the repository: `secrets/`, `captures/`, `evidence/`, `results.txt`. |
 
-`lab.sh` régénère les clés et certificats de démonstration à chaque exécution complète. Ne pas publier les mots de passe personnels, clés SSH existantes ou secrets d'autres projets. Les seules cibles sont les services locaux préparés pour ce travail.
+`lab.sh` regenerates the demo keys and certificates on each full run. Do not publish personal passwords, existing SSH keys or other projects' secrets. The only targets are the local services prepared for this work.
 
-## 11. Ordre de réalisation
+## 11. Schedule
 
-| Dates | Travail et critère de fin |
+| Dates | Work and exit criterion |
 | --- | --- |
-| 12-18 octobre | Vérifier les outils, préparer la capture, réaliser Ping, HTTP et TLS 1.3. Le même fichier est reçu dans les deux modes. |
-| 19-25 octobre | Ajouter Telnet et SSH. Les quatre communications fonctionnent et disposent de captures. |
-| 26 octobre-1 novembre | Réaliser les tests key log, RSA statique et faux certificat. Documenter les conditions de chaque résultat. |
-| 2-8 novembre | Terminer le rapport, le tableau comparatif et les slides. Figer les configurations. |
-| 9-14 novembre | Rejouer depuis un démarrage propre, préparer les captures de secours et répéter les questions. |
-| 15 novembre | Remise et soutenance. |
+| 12-18 October | Check the tools, prepare the capture, run Ping, HTTP and TLS 1.3. The same file arrives in both modes. |
+| 19-25 October | Add Telnet and SSH. All four communications work and have captures. |
+| 26 October-1 November | Run the key log, static RSA and fake certificate tests. Document the conditions of each result. |
+| 2-8 November | Finish the report, the comparison table and the slides. Freeze the configurations. |
+| 9-14 November | Replay from a clean start, prepare backup captures and rehearse the questions. |
+| 15 November | Submission and defense. |
 
-Si un outil impose une configuration disproportionnée, garder l'objectif du test et utiliser l'alternative documentée. Ne pas ajouter de nouvelles familles de protocoles.
+If a tool demands a disproportionate setup, keep the test's goal and use the documented alternative. Do not add new protocol families.
 
-## 12. Rapport et soutenance
+## 12. Report and defense
 
-Le rapport suit le chemin de la démonstration : objectif, architecture, configurations, Telnet/HTTP, SSH, TLS 1.3, déchiffrements, faux certificat, bilan et sources. Il contient les captures Ping et Wireshark demandées. Le volet TLS occupe environ la moitié de l'exposé.
+The report follows the demo: goal, architecture, configurations, Telnet/HTTP, SSH, TLS 1.3, decryptions, fake certificate, conclusion and sources. It includes the requested Ping and Wireshark screenshots. TLS takes about half of the talk.
 
-Déroulé oral : montrer une donnée en clair, montrer la communication protégée, expliquer le handshake TLS, déchiffrer avec les secrets connus, comparer RSA statique et échange éphémère, puis finir par le refus et l'acceptation du faux certificat selon la configuration client.
+Talk outline: show data in clear, show the protected communication, explain the TLS handshake, decrypt with known secrets, compare static RSA with ephemeral exchange, and end with the fake certificate being refused or accepted depending on the client configuration.
 
-Questions à maîtriser : chiffrement et encodage, confidentialité et authentification, certificat et clé privée, TLS et HTTPS, TLS et SSH, clé de session et clé de certificat, forward secrecy, lecture passive et faux serveur, rôle exact de Wireshark.
+Questions to master: encryption versus encoding, confidentiality versus authentication, certificate versus private key, TLS versus HTTPS, TLS versus SSH, session key versus certificate key, forward secrecy, passive reading versus fake server, and Wireshark's exact role.
 
-Les quatre éléments de la note sont couverts : rapport documenté, présentation claire, services et tests fonctionnels, compréhension des concepts. Une capture externe utilisée en secours doit être annoncée comme telle.
+The four grading items are covered: documented report, clear presentation, working services and tests, understanding of the concepts. Any external capture used as a backup must be announced as such.
 
-## 13. État au 12 octobre 2026
+## 13. Status on 12 October 2026
 
-Le laboratoire tourne dans le conteneur et `lab.sh` vérifie 27 observations, toutes réussies en 57 secondes sur le PC de Mohamed. Versions enregistrées dans `out/evidence/versions.txt` : OpenSSL 3.5.7, OpenSSH 10.0p1, inetutils-telnetd 2.6, curl 8.14.1, TShark 4.4.19, Python 3.13.5, testssl.sh 3.2.1.
+The lab runs in the container and `lab.sh` checks 27 observations, all passing in 57 seconds on Mohamed's PC. Versions recorded in `out/evidence/versions.txt`: OpenSSL 3.5.7, OpenSSH 10.0p1, inetutils-telnetd 2.6, curl 8.14.1, TShark 4.4.19, Python 3.13.5, testssl.sh 3.2.1.
 
-Le TLS 1.3 de notre serveur négocie `TLS_AES_256_GCM_SHA384` avec le groupe hybride post-quantique `X25519MLKEM768`, valeur par défaut d'OpenSSL 3.5. Wireshark déchiffre cette session avec le key log comme les autres.
+The same checkout passes the same 27 checks natively in Kali 2026.2 under WSL, in 73 seconds, with OpenSSL 3.6.3, TShark 4.6.6, inetutils-telnetd 2.8 and testssl.sh 3.2.4.
 
-Restent les parties humaines : captures d'écran Wireshark annotées, rapport, slides et répétition.
+Our TLS 1.3 server negotiates `TLS_AES_256_GCM_SHA384` with the post-quantum hybrid group `X25519MLKEM768`, OpenSSL 3.5's default. Wireshark decrypts this session with the key log like the others.
 
-## 14. Sources techniques
+What remains is human work: annotated Wireshark screenshots, report, slides and rehearsal.
 
-[1] [Wireshark : TLS et conditions de déchiffrement](https://wiki.wireshark.org/TLS/) — key logs, RSA statique, limites liées à ECDHE, TLS 1.3 et reprise de session. Fournit aussi des captures pédagogiques.
+## 14. Technical sources
 
-[2] [Wireshark : SSH](https://wiki.wireshark.org/SSH) — parties observables et contenu chiffré d'une session SSH.
+[1] [Wireshark: TLS and decryption conditions](https://wiki.wireshark.org/TLS/). Key logs, static RSA, ECDHE limits, TLS 1.3 and session resumption. Also provides teaching captures.
 
-[3] [OpenSSL s_client](https://docs.openssl.org/3.0/man1/openssl-s_client/) et [s_server](https://docs.openssl.org/3.0/man1/openssl-s_server/) — profils de négociation, vérification des certificats et export des secrets.
+[2] [Wireshark: SSH](https://wiki.wireshark.org/SSH). Observable parts and encrypted content of an SSH session.
 
-[4] [RFC 8446 : TLS 1.3](https://www.rfc-editor.org/rfc/rfc8446.html) — handshake, protection des données et changements cryptographiques par rapport aux anciennes versions.
+[3] [OpenSSL s_client](https://docs.openssl.org/3.0/man1/openssl-s_client/) and [s_server](https://docs.openssl.org/3.0/man1/openssl-s_server/). Negotiation profiles, certificate verification and secret export.
 
-[5] [Documentation curl](https://curl.se/docs/manpage.html) — vérification TLS, fichier de confiance et effet de `--insecure`.
+[4] [RFC 8446: TLS 1.3](https://www.rfc-editor.org/rfc/rfc8446.html). Handshake, data protection and cryptographic changes from older versions.
 
-[6] [testssl.sh](https://github.com/testssl/testssl.sh) — audit des versions et suites de nos serveurs. Les résultats d'un scanner doivent être expliqués et ne remplacent pas les captures.
+[5] [curl documentation](https://curl.se/docs/manpage.html). TLS verification, trust file and the effect of `--insecure`.
 
-[7] [Guide Wireshark](https://www.wireshark.org/docs/wsug_html/) — capture, filtres, suivi des flux et secrets TLS.
+[6] [testssl.sh](https://github.com/testssl/testssl.sh). Audit of our servers' versions and suites. A scanner's results must be explained and do not replace the captures.
 
-[8] [OpenSSH](https://www.openssh.com/manual.html) — configuration client/serveur et vérification des clés d'hôte.
+[7] [Wireshark user guide](https://www.wireshark.org/docs/wsug_html/). Capture, filters, stream following and TLS secrets.
+
+[8] [OpenSSH](https://www.openssh.com/manual.html). Client and server configuration, host key verification.
