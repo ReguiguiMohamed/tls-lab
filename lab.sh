@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Runs the lab tests, saves one capture per test in out/captures and checks each expected
 # observation with tshark. Run setup.sh once first, then as root:
-#   sudo bash lab.sh [ping|telnet|http|ssh|tls13|tls12|fake ...]
+#   sudo bash lab.sh [ping|telnet|http|ssh|tls13|tls12|fake|versions|bot ...]
 # With no argument it starts from scratch and runs every test.
 set -u
 cd "$(dirname "$0")"
@@ -60,9 +60,9 @@ setup() {
   : > $OUT/results.txt
   dpkg-query -W openssl openssh-server inetutils-telnetd curl tshark python3 testssl.sh > $E/versions.txt
 
-  # Lab CA, trusted only through --cacert / -CAfile.
+  # Lab CA, trusted only through --cacert / -CAfile. Python 3.13 and later reject a CA without key usage.
   openssl req -x509 -newkey rsa:2048 -nodes -days 30 -subj "/CN=Lab CA TLS" \
-    -keyout $S/ca.key -out $S/ca.crt 2>/dev/null
+    -addext "keyUsage=critical,keyCertSign,cRLSign" -keyout $S/ca.key -out $S/ca.crt 2>/dev/null
 
   # One RSA server key for TLS 1.3 and TLS 1.2: the same key decrypts one and not the other.
   openssl req -newkey rsa:2048 -nodes -subj "/CN=localhost" -keyout $S/server.key -out $S/server.csr 2>/dev/null
@@ -212,9 +212,74 @@ t_fake() {
   check "fake: fake server receives the text with --insecure" 'grep -q $W $E/fake-server.log'
 }
 
+t_versions() {
+  # Stock OpenSSL 3 refuses TLS 1.0 and 1.1 above security level 0. Kali's openssl.cnf already
+  # allows them, the flag keeps the test independent of that file.
+  local old="-cipher DEFAULT@SECLEVEL=0" port=8450 v curl_tls1
+  for v in tls1 tls1_1 tls1_2 tls1_3; do
+    openssl s_server -quiet -accept 127.0.0.1:$port -$v $old -www -cert $S/server.crt -key $S/server.key \
+      > /dev/null 2>&1 &
+    local srv=$!
+    sleep 1
+    capture_start versions-$v "tcp port $port"
+    openssl s_client -connect 127.0.0.1:$port -$v $old -servername localhost -CAfile $S/ca.crt \
+      -verify_return_error -verify_hostname localhost -brief < /dev/null > $E/versions-$v.txt 2>&1
+    capture_stop
+    if [ $v = tls1 ]; then
+      curl -4 -sS --cacert $S/ca.crt --resolve localhost:$port:127.0.0.1 https://localhost:$port/ \
+        > /dev/null 2> $E/versions-curl-tls1.txt
+      curl_tls1=$?
+    fi
+    kill $srv
+    port=$((port + 1))
+  done
+  check "versions: TLSv1 negotiated" 'grep -q "Protocol version: TLSv1$" $E/versions-tls1.txt'
+  check "versions: TLSv1.1 negotiated" 'grep -q "Protocol version: TLSv1.1" $E/versions-tls1_1.txt'
+  check "versions: TLSv1.2 negotiated" 'grep -q "Protocol version: TLSv1.2" $E/versions-tls1_2.txt'
+  check "versions: TLSv1.3 negotiated" 'grep -q "Protocol version: TLSv1.3" $E/versions-tls1_3.txt'
+  # The CA name sits inside the server certificate, so it is on the wire only when the certificate is.
+  check "versions: certificate readable in TLS 1.0, 1.1 and 1.2" \
+    'on_wire versions-tls1 "Lab CA TLS" && on_wire versions-tls1_1 "Lab CA TLS" && on_wire versions-tls1_2 "Lab CA TLS"'
+  check "versions: certificate encrypted in TLS 1.3" '! on_wire versions-tls1_3 "Lab CA TLS"'
+  check "versions: curl refuses a TLS 1.0 server by default (curl code 35)" '[ $curl_tls1 -eq 35 ]'
+  check "versions: this OpenSSL has no SSL 3.0 option" '! openssl s_client -help 2>&1 | grep -q -- -ssl3'
+}
+
+t_bot() {
+  # Without -WWW, s_server prints each request with its User-Agent: that is the site's access log.
+  sleep 60 | openssl s_server -quiet -accept 127.0.0.1:8460 -cert $S/server.crt -key $S/server.key \
+    > $E/bot-server.log 2>&1 &
+  sleep 1
+  local url=https://localhost:8460
+  local ff="Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0"
+  local get="curl -4 -s --max-time 1 --cacert $S/ca.crt --resolve localhost:8460:127.0.0.1"
+  local py='import sys, ssl, urllib.request as u
+h = {"User-Agent": sys.argv[3]} if len(sys.argv) > 3 else {}
+u.urlopen(u.Request(sys.argv[1], headers=h), timeout=1, context=ssl.create_default_context(cafile=sys.argv[2]))'
+  capture_start bot "tcp port 8460"
+  $get $url/honest-curl
+  $get -A "$ff" $url/bot-curl
+  python3 -c "$py" $url/honest-python $S/ca.crt 2> /dev/null
+  python3 -c "$py" $url/bot-python $S/ca.crt "$ff" 2> /dev/null
+  capture_stop
+  pkill -f "accept 127.0.0.1:8460"
+  # One line per connection, in order: JA4 seen on the wire, then the User-Agent the client claimed.
+  paste <(tshark -r $C/bot.pcapng -d tcp.port==8460,tls -Y "tls.handshake.type == 1" -T fields \
+    -e tls.handshake.ja4 2>/dev/null) <(grep "^User-Agent: " $E/bot-server.log | cut -d" " -f2-) > $E/bot-ja4.txt
+  # Detector: a client that claims a browser but has the JA4 of a tool seen earlier is flagged.
+  awk -F'\t' '$2 !~ /^Mozilla/ { tool[$1] = $2 }
+    $2 ~ /^Mozilla/ && ($1 in tool) { print "BOT " $1 " claims a browser, TLS of " tool[$1] }' \
+    $E/bot-ja4.txt > $E/bot-flagged.txt
+  local ja4
+  mapfile -t ja4 < <(cut -f1 $E/bot-ja4.txt)
+  check "bot: curl and Python have different JA4 fingerprints" '[ ${#ja4[@]} -eq 4 ] && [ "${ja4[0]}" != "${ja4[2]}" ]'
+  check "bot: a fake User-Agent leaves the JA4 unchanged" '[ "${ja4[0]}" = "${ja4[1]}" ] && [ "${ja4[2]}" = "${ja4[3]}" ]'
+  check "bot: detector flags the 2 fake browsers and no honest client" '[ $(wc -l < $E/bot-flagged.txt) -eq 2 ]'
+}
+
 if [ $# -eq 0 ]; then
   setup
-  set -- ping telnet http ssh tls13 tls12 fake
+  set -- ping telnet http ssh tls13 tls12 fake versions bot
 else
   [ -d $OUT ] || setup
 fi
