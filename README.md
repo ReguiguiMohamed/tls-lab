@@ -42,7 +42,7 @@ wsl -d kali-linux
 sudo bash setup.sh
 ```
 
-5. Run every test. The last line must read `0 failure(s)`, after about 75 seconds:
+5. Run every test. The last line must read `0 failure(s)`, after about 90 seconds:
 
 ```bash
 sudo bash lab.sh
@@ -65,6 +65,8 @@ sudo bash lab.sh tls13 tls12
 | `tls13` | 8443 | Certificate and name verified, TLS 1.3 negotiated, text absent without secrets and with the RSA key alone, present with the key log. |
 | `tls12` | 8444 | Suite `TLS_RSA_WITH_AES_128_GCM_SHA256`, past session decrypted with the server's private key, testssl.sh reports no forward secrecy. |
 | `fake` | 9443 | The verifying client rejects the fake certificate and sends nothing. With `--insecure`, the fake server receives the witness text. |
+| `versions` | 8450-8453 | TLS 1.0, 1.1, 1.2 and 1.3 negotiated. The certificate is readable up to TLS 1.2 and encrypted in TLS 1.3. curl refuses TLS 1.0 by default. This OpenSSL has no SSL 3.0. |
+| `bot` | 8460 | curl and Python keep their JA4 fingerprint when they claim a Firefox User-Agent. A detector that compares the two flags both fake browsers. |
 
 The TLS 1.3 and TLS 1.2 servers share one RSA key. It decrypts the TLS 1.2 session and not the TLS 1.3 one, which isolates the effect of static RSA key exchange.
 
@@ -75,7 +77,7 @@ The TLS 1.3 and TLS 1.2 servers share one RSA key. It decrypts the TLS 1.2 sessi
 | `out/results.txt` | One `PASS` or `FAIL` line per check. |
 | `out/captures/*.pcapng` | One original capture per test, without embedded secrets. |
 | `out/captures/tls13-with-keys.pcapng` | The TLS 1.3 session with its key log embedded, so it opens already decrypted. |
-| `out/evidence/` | Tool versions, client outputs, fake server log, testssl.sh reports. |
+| `out/evidence/` | Tool versions, client outputs, fake server log, testssl.sh reports, JA4 per connection and the detector's verdicts. |
 | `out/secrets/` | The lab's throwaway CA, keys and key log, regenerated on every run. |
 
 ## Wireshark on Windows
