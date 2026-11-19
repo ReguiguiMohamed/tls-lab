@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Runs the lab tests, saves one capture per test in out/captures and checks each expected
 # observation with tshark. Run setup.sh once first, then as root:
-#   sudo bash lab.sh [ping|telnet|http|ssh|tls13|tls12|fake|versions|bot ...]
+#   sudo bash lab.sh [ping|telnet|http|ssh|tls13|tls12|fake|versions|bot|mitm|mtls ...]
 # With no argument it starts from scratch and runs every test.
 set -u
 cd "$(dirname "$0")"
@@ -58,7 +58,7 @@ setup() {
   rm -rf $OUT
   mkdir -p $S $C $E
   : > $OUT/results.txt
-  dpkg-query -W openssl openssh-server inetutils-telnetd curl tshark python3 testssl.sh > $E/versions.txt
+  dpkg-query -W openssl openssh-server inetutils-telnetd curl tshark python3 testssl.sh mitmproxy > $E/versions.txt
 
   # Lab CA, trusted only through --cacert / -CAfile. Python 3.13 and later reject a CA without key usage.
   openssl req -x509 -newkey rsa:2048 -nodes -days 30 -subj "/CN=Lab CA TLS" \
@@ -193,6 +193,40 @@ t_tls12() {
     'tls_text $C/tls12-rsa.pcapng $dec -o "uat:rsa_keys:\"$S/server.key\",\"\"" | grep -q $W'
 }
 
+t_mtls() {
+  openssl req -newkey rsa:2048 -nodes -subj '/CN=Authorized client' \
+    -keyout $S/mtls-client.key -out $S/mtls-client.csr 2> $E/mtls-cert.log
+  openssl x509 -req -in $S/mtls-client.csr -CA $S/ca.crt -CAkey $S/ca.key -days 30 \
+    -extfile <(printf 'extendedKeyUsage=clientAuth') -out $S/mtls-client.crt >> $E/mtls-cert.log 2>&1
+  openssl req -x509 -newkey rsa:2048 -nodes -days 30 -subj '/CN=Untrusted client' \
+    -addext 'extendedKeyUsage=clientAuth' -keyout $S/mtls-untrusted.key \
+    -out $S/mtls-untrusted.crt >> $E/mtls-cert.log 2>&1
+  (cd $WWW && exec openssl s_server -quiet -accept 127.0.0.1:8480 -tls1_3 -WWW \
+    -cert ../../$S/server.crt -key ../../$S/server.key -CAfile ../../$S/ca.crt \
+    -Verify 1 -verify_return_error) > $E/mtls-server.log 2>&1 &
+  local srv=$! missing untrusted authorized
+  local -a get=(curl -4 -sS --noproxy '*' --http1.1 --tlsv1.3 --tls-max 1.3 --max-time 5 \
+    --cacert "$S/ca.crt" --resolve localhost:8480:127.0.0.1)
+  rm -f $E/mtls-missing.txt $E/mtls-untrusted.txt $E/mtls-authorized.txt
+  sleep 1
+  capture_start mtls 'tcp port 8480'
+  "${get[@]}" -o $E/mtls-missing.txt https://localhost:8480/witness.txt 2> $E/mtls-missing-error.txt
+  missing=$?
+  "${get[@]}" --cert $S/mtls-untrusted.crt --key $S/mtls-untrusted.key \
+    -o $E/mtls-untrusted.txt https://localhost:8480/witness.txt 2> $E/mtls-untrusted-error.txt
+  untrusted=$?
+  "${get[@]}" --cert $S/mtls-client.crt --key $S/mtls-client.key \
+    -o $E/mtls-authorized.txt https://localhost:8480/witness.txt 2> $E/mtls-authorized-error.txt
+  authorized=$?
+  capture_stop
+  kill "$srv"
+  wait "$srv" 2>/dev/null
+  check 'mtls: client without a certificate is rejected' '[ "$missing" -ne 0 ] && [ ! -s $E/mtls-missing.txt ] && grep -qi "certificate required" $E/mtls-missing-error.txt'
+  check 'mtls: client with an untrusted certificate is rejected' '[ "$untrusted" -ne 0 ] && [ ! -s $E/mtls-untrusted.txt ] && grep -qi "unknown ca" $E/mtls-untrusted-error.txt'
+  check 'mtls: authorized client receives the original file' '[ "$authorized" -eq 0 ] && cmp -s $E/mtls-authorized.txt $WWW/witness.txt'
+  check 'mtls: witness text is absent from the capture' '! on_wire mtls $W'
+}
+
 t_fake() {
   # Without -WWW, s_server prints what it receives: that is the fake server's log.
   sleep 60 | openssl s_server -quiet -accept 127.0.0.1:9443 -cert $S/rogue.crt -key $S/rogue.key \
@@ -277,9 +311,71 @@ u.urlopen(u.Request(sys.argv[1], headers=h), timeout=1, context=ssl.create_defau
   check "bot: detector flags the 2 fake browsers and no honest client" '[ $(wc -l < $E/bot-flagged.txt) -eq 2 ]'
 }
 
+t_mitm() {
+  local conf="$PWD/$S/mitmproxy" changed=MODIFIED_IN_TRANSIT
+  local dec="-d tcp.port==8470,tls -d tcp.port==8471,tls"
+  local -a get=(curl -4 -sS --noproxy '*' --http1.1 --tlsv1.3 --tls-max 1.3 --max-time 5)
+  local direct untrusted trusted pinned srv proxy ready=0
+  openssl x509 -in $S/server.crt -pubkey -noout > $E/mitm-server-public.pem
+  (cd $WWW && exec openssl s_server -quiet -accept 127.0.0.1:8470 -tls1_3 -alpn http/1.1 -WWW \
+    -cert ../../$S/server.crt -key ../../$S/server.key) > $E/mitm-server.log 2>&1 &
+  srv=$!
+  SSLKEYLOGFILE="$PWD/$S/mitm.keys" mitmdump --mode reverse:https://127.0.0.1:8470 \
+    --listen-host 127.0.0.1 --listen-port 8471 --set confdir="$conf" \
+    --set ssl_verify_upstream_trusted_ca="$PWD/$S/ca.crt" \
+    --set tls_version_client_min=TLS1_3 --set tls_version_server_min=TLS1_3 \
+    -s config/modify_response.py -w $E/mitm.flows > $E/mitm-proxy.log 2>&1 &
+  proxy=$!
+  for _ in {1..100}; do
+    if (: > /dev/tcp/127.0.0.1/8471) 2>/dev/null; then ready=1; break; fi
+    kill -0 "$proxy" 2>/dev/null || break
+    sleep 0.1
+  done
+  if [ "$ready" -eq 0 ]; then
+    check "mitm: proxy starts" false
+    kill "$srv" "$proxy" 2>/dev/null
+    wait "$srv" "$proxy" 2>/dev/null
+    return
+  fi
+  "${get[@]}" --cacert $S/ca.crt --pinnedpubkey $E/mitm-server-public.pem \
+    https://127.0.0.1:8470/witness.txt > $E/mitm-direct.txt 2> $E/mitm-direct-client.txt
+  direct=$?
+  capture_start mitm "tcp port 8470 or tcp port 8471"
+  "${get[@]}" --cacert $S/ca.crt --resolve localhost:8471:127.0.0.1 \
+    https://localhost:8471/witness.txt > $E/mitm-untrusted.txt 2> $E/mitm-untrusted-client.txt
+  untrusted=$?
+  "${get[@]}" --cacert "$conf/mitmproxy-ca-cert.pem" --resolve localhost:8471:127.0.0.1 \
+    https://localhost:8471/witness.txt > $E/mitm-trusted.txt 2> $E/mitm-trusted-client.txt
+  trusted=$?
+  "${get[@]}" --cacert "$conf/mitmproxy-ca-cert.pem" --pinnedpubkey $E/mitm-server-public.pem \
+    --resolve localhost:8471:127.0.0.1 https://localhost:8471/witness.txt \
+    > $E/mitm-pinned.txt 2> $E/mitm-pinned-client.txt
+  pinned=$?
+  capture_stop
+  kill "$proxy" "$srv"
+  wait "$proxy" "$srv" 2>/dev/null
+  printf 'untrusted=%s\ntrusted=%s\npinned=%s\n' "$untrusted" "$trusted" "$pinned" > $E/mitm-status.txt
+  check "mitm: direct request with the original public-key pin returns the original file" \
+    '[ "$direct" -eq 0 ] && cmp -s $E/mitm-direct.txt $WWW/witness.txt'
+  check "mitm: original CA rejects the proxy certificate (curl code 60)" '[ "$untrusted" -eq 60 ]'
+  check "mitm: trusting the proxy CA delivers the modified response" \
+    '[ "$trusted" -eq 0 ] && [ "$(cat $E/mitm-trusted.txt)" = "$changed" ]'
+  check "mitm: original public-key pin rejects the trusted proxy (curl code 90)" \
+    '[ "$pinned" -eq 90 ] && [ ! -s $E/mitm-pinned.txt ]'
+  check "mitm: TLS 1.3 negotiated on both proxy legs" \
+    'tshark -r $C/mitm.pcapng $dec -Y "tls.handshake.type == 2" -T fields -e tcp.srcport -e tls.handshake.extensions.supported_version 2>/dev/null | awk '\''$1 == 8470 && $2 == "0x0304" {a=1} $1 == 8471 && $2 == "0x0304" {b=1} END {exit !(a && b)}'\'''
+  check "mitm: original and modified text absent from the capture without secrets" \
+    '! on_wire mitm $W && ! on_wire mitm $changed'
+  # OpenSSL's HTTP/1.0 reply has no Content-Length. Inspect its body without waiting for HTTP reassembly.
+  check "mitm: key log reveals the original response on the server leg" \
+    'tshark -r $C/mitm.pcapng $dec -o tls.keylog_file:$S/mitm.keys -o http.desegment_body:FALSE -Y "tcp.srcport == 8470 && http.file_data contains \"$W\"" -T fields -e frame.number 2>/dev/null | grep -q .'
+  check "mitm: key log reveals the modified response on the client leg" \
+    'tshark -r $C/mitm.pcapng $dec -o tls.keylog_file:$S/mitm.keys -o http.desegment_body:FALSE -Y "tcp.srcport == 8471 && http.file_data contains \"$changed\"" -T fields -e frame.number 2>/dev/null | grep -q .'
+}
+
 if [ $# -eq 0 ]; then
   setup
-  set -- ping telnet http ssh tls13 tls12 fake versions bot
+  set -- ping telnet http ssh tls13 tls12 fake versions bot mitm mtls
 else
   [ -d $OUT ] || setup
 fi
