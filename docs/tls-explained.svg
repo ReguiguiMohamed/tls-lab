@@ -1,0 +1,475 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="3168" height="4402" viewBox="0 0 3168 4402">
+<rect width="100%" height="100%" fill="#f5f8fb"/>
+<text x="48" y="82.75999999999999" font-family="Arial,Helvetica,sans-serif" font-size="54" text-anchor="start" fill="#183044">TLS: what happened in our lab?</text>
+<text x="48" y="130.44" font-family="Arial,Helvetica,sans-serif" font-size="26" text-anchor="start" fill="#506479">Read 01 to 12, left to right. Start with the picture. Use TLS-GUIDE.md for the full explanation.</text>
+<rect x="48.0" y="158" width="600.0" height="60.6" rx="14" fill="#eaf3fc" stroke="#2463a6" stroke-width="2"/>
+<text x="66.0" y="194.68" font-family="Arial,Helvetica,sans-serif" font-size="22" text-anchor="start" fill="#183044">BLUE public / setup</text>
+<rect x="666.0" y="158" width="600.0" height="60.6" rx="14" fill="#f3eefa" stroke="#7151a8" stroke-width="2"/>
+<text x="684.0" y="194.68" font-family="Arial,Helvetica,sans-serif" font-size="22" text-anchor="start" fill="#183044">PURPLE secret keys</text>
+<rect x="1284.0" y="158" width="600.0" height="60.6" rx="14" fill="#eaf6ee" stroke="#23734b" stroke-width="2"/>
+<text x="1302.0" y="194.68" font-family="Arial,Helvetica,sans-serif" font-size="22" text-anchor="start" fill="#183044">GREEN protection works</text>
+<rect x="1902.0" y="158" width="600.0" height="60.6" rx="14" fill="#fff0f0" stroke="#b33a45" stroke-width="2"/>
+<text x="1920.0" y="194.68" font-family="Arial,Helvetica,sans-serif" font-size="22" text-anchor="start" fill="#183044">RED data exposure</text>
+<rect x="2520.0" y="158" width="600.0" height="60.6" rx="14" fill="#fff6df" stroke="#9a650b" stroke-width="2"/>
+<text x="2538.0" y="194.68" font-family="Arial,Helvetica,sans-serif" font-size="22" text-anchor="start" fill="#183044">GOLD explain aloud</text>
+<rect x="48" y="238" width="1000" height="980" rx="14" fill="#ffffff" stroke="#ccd8e1" stroke-width="2"/>
+<rect x="72" y="264" width="66" height="54" rx="14" fill="#2463a6" stroke="#2463a6" stroke-width="2"/>
+<text x="105.0" y="299.2" font-family="Arial,Helvetica,sans-serif" font-size="30" text-anchor="middle" fill="#ffffff">01</text>
+<text x="156" y="298.08" font-family="Arial,Helvetica,sans-serif" font-size="32" text-anchor="start" fill="#2463a6">The stage and the promise</text>
+<text x="80" y="354.68" font-family="Arial,Helvetica,sans-serif" font-size="22" text-anchor="start" fill="#506479">Client = asks. Server = answers. Both are programs on our Kali machine.</text>
+<rect x="80.0" y="408" width="459.0" height="99.60000000000001" rx="14" fill="#eaf3fc" stroke="#2463a6" stroke-width="2"/>
+<text x="98.0" y="448.44" font-family="Arial,Helvetica,sans-serif" font-size="26" text-anchor="start" fill="#183044">CLIENT</text>
+<text x="98.0" y="482.24" font-family="Arial,Helvetica,sans-serif" font-size="26" text-anchor="start" fill="#183044">curl asks for witness.txt</text>
+<rect x="557.0" y="408" width="459.0" height="99.60000000000001" rx="14" fill="#eaf3fc" stroke="#2463a6" stroke-width="2"/>
+<text x="575.0" y="448.44" font-family="Arial,Helvetica,sans-serif" font-size="26" text-anchor="start" fill="#183044">SERVER</text>
+<text x="575.0" y="482.24" font-family="Arial,Helvetica,sans-serif" font-size="26" text-anchor="start" fill="#183044">OpenSSL serves the file</text>
+<path d="M230,553.6 L866,553.6" fill="none" stroke="#2463a6" stroke-width="2"/>
+<path d="M853.3937405670625,559.6895174775573 L866,553.6" fill="none" stroke="#2463a6" stroke-width="2"/>
+<path d="M853.3937405670625,547.5104825224428 L866,553.6" fill="none" stroke="#2463a6" stroke-width="2"/>
+<text x="548.0" y="537.22" font-family="Arial,Helvetica,sans-serif" font-size="23" text-anchor="middle" fill="#2463a6">127.0.0.1 = this machine</text>
+<rect x="80" y="585.6" width="936" height="94.4" rx="14" fill="#f0f3f6" stroke="#cad5df" stroke-width="2"/>
+<text x="98" y="624.16" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">lo = local loopback path. A port is a numbered door: 8443 for TLS 1.3, 8444 for TLS</text>
+<text x="98" y="655.36" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">1.2. No Wi-Fi or external target is involved.</text>
+<rect x="80.0" y="698.0" width="459.0" height="94.4" rx="14" fill="#fff0f0" stroke="#b33a45" stroke-width="2"/>
+<text x="98.0" y="736.56" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">HTTP / Telnet</text>
+<text x="98.0" y="767.76" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">Postcard: captured content is readable.</text>
+<rect x="557.0" y="698.0" width="459.0" height="94.4" rx="14" fill="#eaf6ee" stroke="#23734b" stroke-width="2"/>
+<text x="575.0" y="736.56" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">HTTPS = HTTP inside TLS</text>
+<text x="575.0" y="767.76" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">Locked delivery + checked recipient ID.</text>
+<rect x="80" y="810.4" width="936" height="156.8" rx="14" fill="#eaf6ee" stroke="#23734b" stroke-width="2"/>
+<text x="98" y="848.9599999999999" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">TLS = Transport Layer Security</text>
+<text x="98" y="880.16" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">Privacy: outsiders cannot read content.</text>
+<text x="98" y="911.3599999999999" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">Integrity: changes are detected.</text>
+<text x="98" y="942.56" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">Authentication: check the server's identity.</text>
+<rect x="80" y="985.2" width="936" height="94.4" rx="14" fill="#fff6df" stroke="#9a650b" stroke-width="2"/>
+<text x="98" y="1023.76" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">SAY IT TLS protects messages between programs. The endpoints can still read</text>
+<text x="98" y="1054.96" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">them.</text>
+<text x="80" y="1178.8" font-family="Arial,Helvetica,sans-serif" font-size="20" text-anchor="start" fill="#506479">Evidence: t_http and t_telnet. Integrity is explained, not a separate tampering test.</text>
+<rect x="1084" y="238" width="1000" height="980" rx="14" fill="#ffffff" stroke="#ccd8e1" stroke-width="2"/>
+<rect x="1108" y="264" width="66" height="54" rx="14" fill="#7151a8" stroke="#7151a8" stroke-width="2"/>
+<text x="1141.0" y="299.2" font-family="Arial,Helvetica,sans-serif" font-size="30" text-anchor="middle" fill="#ffffff">02</text>
+<text x="1192" y="298.08" font-family="Arial,Helvetica,sans-serif" font-size="32" text-anchor="start" fill="#7151a8">Three jobs, different keys</text>
+<text x="1116" y="354.68" font-family="Arial,Helvetica,sans-serif" font-size="22" text-anchor="start" fill="#506479">A key is numerical data. Encrypt = scramble. Decrypt = recover with the right key.</text>
+<rect x="1116.0" y="408" width="459.0" height="156.8" rx="14" fill="#eaf6ee" stroke="#23734b" stroke-width="2"/>
+<text x="1134.0" y="446.56" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">FAST DATA LOCK</text>
+<text x="1134.0" y="477.76" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">Shared secret keys</text>
+<text x="1134.0" y="508.96000000000004" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">AES-GCM protects the request and file.</text>
+<text x="1134.0" y="540.16" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">Each direction has its own key.</text>
+<rect x="1593.0" y="408" width="459.0" height="156.8" rx="14" fill="#f3eefa" stroke="#7151a8" stroke-width="2"/>
+<text x="1611.0" y="446.56" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">IDENTITY PROOF</text>
+<text x="1611.0" y="477.76" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">Public / private pair</text>
+<text x="1611.0" y="508.96000000000004" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">RSA: public key checks a signature</text>
+<text x="1611.0" y="540.16" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">made with the private key.</text>
+<rect x="1116" y="582.8" width="936" height="222" rx="14" fill="#f3eefa" stroke="#7151a8" stroke-width="2"/>
+<text x="1134" y="619.3599999999999" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#7151a8">RSA's math, in miniature</text>
+<rect x="1134" y="644.8" width="190" height="68.4" rx="14" fill="#ffffff" stroke="#7151a8" stroke-width="2"/>
+<text x="1229.0" y="687.12" font-family="Arial,Helvetica,sans-serif" font-size="28" text-anchor="middle" fill="#183044">61 x 53</text>
+<rect x="1844" y="644.8" width="190" height="68.4" rx="14" fill="#ffffff" stroke="#7151a8" stroke-width="2"/>
+<text x="1939.0" y="687.12" font-family="Arial,Helvetica,sans-serif" font-size="28" text-anchor="middle" fill="#183044">3233</text>
+<text x="1584.0" y="658.4799999999999" font-family="Arial,Helvetica,sans-serif" font-size="22" text-anchor="middle" fill="#23734b">Multiply: easy</text>
+<path d="M1336,683.8 L1832,683.8" fill="none" stroke="#23734b" stroke-width="2"/>
+<path d="M1819.3937405670624,689.8895174775572 L1832,683.8" fill="none" stroke="#23734b" stroke-width="2"/>
+<path d="M1819.3937405670624,677.7104825224427 L1832,683.8" fill="none" stroke="#23734b" stroke-width="2"/>
+<text x="1134" y="748.42" font-family="Arial,Helvetica,sans-serif" font-size="23" text-anchor="start" fill="#183044">Recovering the factors from a very large product is hard. Real RSA uses large numbers</text>
+<text x="1134" y="778.3199999999999" font-family="Arial,Helvetica,sans-serif" font-size="23" text-anchor="start" fill="#183044">and padding. This toy example is not secure.</text>
+<rect x="1116" y="822.8" width="936" height="94.4" rx="14" fill="#eaf3fc" stroke="#2463a6" stroke-width="2"/>
+<text x="1134" y="861.3599999999999" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">A signature is a checkable seal on exact data. It does not hide that data. The CA</text>
+<text x="1134" y="892.56" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">signs an ID. In TLS 1.3, the server signs the setup conversation.</text>
+<rect x="1116" y="935.1999999999999" width="936" height="94.4" rx="14" fill="#fff6df" stroke="#9a650b" stroke-width="2"/>
+<text x="1134" y="973.7599999999999" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">SAY IT In our TLS 1.3 case, RSA proves identity. Temporary secrets set up AES</text>
+<text x="1134" y="1004.9599999999999" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">data keys.</text>
+<text x="1116" y="1178.8" font-family="Arial,Helvetica,sans-serif" font-size="20" text-anchor="start" fill="#506479">RSA = Rivest, Shamir, Adleman. rsa:2048 = a 2048-bit RSA key pair.</text>
+<rect x="2120" y="238" width="1000" height="980" rx="14" fill="#ffffff" stroke="#ccd8e1" stroke-width="2"/>
+<rect x="2144" y="264" width="66" height="54" rx="14" fill="#2463a6" stroke="#2463a6" stroke-width="2"/>
+<text x="2177.0" y="299.2" font-family="Arial,Helvetica,sans-serif" font-size="30" text-anchor="middle" fill="#ffffff">03</text>
+<text x="2228" y="298.08" font-family="Arial,Helvetica,sans-serif" font-size="32" text-anchor="start" fill="#2463a6">Create files before connecting</text>
+<text x="2152" y="354.68" font-family="Arial,Helvetica,sans-serif" font-size="22" text-anchor="start" fill="#506479">This is preparation on disk. No network conversation happens in these steps.</text>
+<rect x="2152" y="408" width="936" height="125.60000000000001" rx="14" fill="#f3eefa" stroke="#7151a8" stroke-width="2"/>
+<text x="2170" y="446.56" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">1 Make the CA</text>
+<text x="2170" y="477.76" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">ca.key = secret signing key</text>
+<text x="2170" y="508.96000000000004" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">ca.crt = public, self-signed CA certificate</text>
+<path d="M2620.0,541.6 L2620.0,565.6" fill="none" stroke="#7151a8" stroke-width="2"/>
+<path d="M2613.9104825224426,552.9937405670626 L2620.0,565.6" fill="none" stroke="#7151a8" stroke-width="2"/>
+<path d="M2626.0895174775574,552.9937405670626 L2620.0,565.6" fill="none" stroke="#7151a8" stroke-width="2"/>
+<rect x="2152" y="575.6" width="936" height="125.60000000000001" rx="14" fill="#eaf3fc" stroke="#2463a6" stroke-width="2"/>
+<text x="2170" y="614.16" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">2 Make the server request</text>
+<text x="2170" y="645.36" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">server.key = separate secret key</text>
+<text x="2170" y="676.56" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">server.csr = public request containing its public key</text>
+<path d="M2620.0,709.2 L2620.0,733.2" fill="none" stroke="#2463a6" stroke-width="2"/>
+<path d="M2613.9104825224426,720.5937405670626 L2620.0,733.2" fill="none" stroke="#2463a6" stroke-width="2"/>
+<path d="M2626.0895174775574,720.5937405670626 L2620.0,733.2" fill="none" stroke="#2463a6" stroke-width="2"/>
+<rect x="2152" y="743.2" width="936" height="125.60000000000001" rx="14" fill="#eaf6ee" stroke="#23734b" stroke-width="2"/>
+<text x="2170" y="781.76" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">3 CA signs the certificate</text>
+<text x="2170" y="812.96" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">ca.key signs the requested server identity.</text>
+<text x="2170" y="844.16" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">Result: server.crt, public ID for localhost / 127.0.0.1</text>
+<rect x="2152" y="876.8000000000001" width="936" height="94.4" rx="14" fill="#f0f3f6" stroke="#cad5df" stroke-width="2"/>
+<text x="2170" y="915.36" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">CSR = Certificate Signing Request. It asks for a certificate. It contains no private key.</text>
+<text x="2170" y="946.5600000000001" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">The signed certificate contains the public key, names, dates and CA signature.</text>
+<rect x="2152" y="989.2" width="936" height="63.2" rx="14" fill="#fff6df" stroke="#9a650b" stroke-width="2"/>
+<text x="2170" y="1027.76" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">SAY IT Making an ID card is different from opening a secure connection.</text>
+<text x="2152" y="1178.8" font-family="Arial,Helvetica,sans-serif" font-size="20" text-anchor="start" fill="#506479">Command meanings: -newkey makes a pair. -x509 makes a certificate. -CAkey signs.</text>
+<rect x="48" y="1254" width="1000" height="980" rx="14" fill="#ffffff" stroke="#ccd8e1" stroke-width="2"/>
+<rect x="72" y="1280" width="66" height="54" rx="14" fill="#2463a6" stroke="#2463a6" stroke-width="2"/>
+<text x="105.0" y="1315.2" font-family="Arial,Helvetica,sans-serif" font-size="30" text-anchor="middle" fill="#ffffff">04</text>
+<text x="156" y="1314.08" font-family="Arial,Helvetica,sans-serif" font-size="32" text-anchor="start" fill="#2463a6">Who vouches for the ID?</text>
+<text x="80" y="1370.68" font-family="Arial,Helvetica,sans-serif" font-size="22" text-anchor="start" fill="#506479">CA = certificate authority, a trusted certificate issuer. Trust must start somewhere.</text>
+<text x="80" y="1445.62" font-family="Arial,Helvetica,sans-serif" font-size="23" text-anchor="start" fill="#2463a6">GENERAL CHAIN: each issuer signs the next certificate</text>
+<rect x="80.0" y="1463.9" width="274.6666666666667" height="76" rx="14" fill="#eaf3fc" stroke="#2463a6" stroke-width="2"/>
+<text x="217.33333333333334" y="1502.46" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="middle" fill="#183044">Trusted root CA</text>
+<path d="M362.6666666666667,1501.9 L402.6666666666667,1501.9" fill="none" stroke="#2463a6" stroke-width="2"/>
+<path d="M390.0604072337292,1507.9895174775572 L402.6666666666667,1501.9" fill="none" stroke="#2463a6" stroke-width="2"/>
+<path d="M390.0604072337292,1495.810482522443 L402.6666666666667,1501.9" fill="none" stroke="#2463a6" stroke-width="2"/>
+<rect x="410.6666666666667" y="1463.9" width="274.6666666666667" height="76" rx="14" fill="#eaf3fc" stroke="#2463a6" stroke-width="2"/>
+<text x="548.0" y="1502.46" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="middle" fill="#183044">Intermediate CA</text>
+<path d="M693.3333333333334,1501.9 L733.3333333333334,1501.9" fill="none" stroke="#2463a6" stroke-width="2"/>
+<path d="M720.7270739003959,1507.9895174775572 L733.3333333333334,1501.9" fill="none" stroke="#2463a6" stroke-width="2"/>
+<path d="M720.7270739003959,1495.810482522443 L733.3333333333334,1501.9" fill="none" stroke="#2463a6" stroke-width="2"/>
+<rect x="741.3333333333334" y="1463.9" width="274.6666666666667" height="76" rx="14" fill="#eaf3fc" stroke="#2463a6" stroke-width="2"/>
+<text x="878.6666666666667" y="1502.46" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="middle" fill="#183044">Server ID</text>
+<text x="80" y="1583.52" font-family="Arial,Helvetica,sans-serif" font-size="23" text-anchor="start" fill="#23734b">OUR LAB: no intermediate</text>
+<rect x="80" y="1601.8000000000002" width="360" height="94.4" rx="14" fill="#eaf6ee" stroke="#23734b" stroke-width="2"/>
+<text x="260.0" y="1640.3600000000001" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="middle" fill="#183044">Lab CA TLS</text>
+<text x="260.0" y="1671.5600000000002" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="middle" fill="#183044">ca.crt</text>
+<rect x="656" y="1601.8000000000002" width="360" height="94.4" rx="14" fill="#eaf6ee" stroke="#23734b" stroke-width="2"/>
+<text x="836.0" y="1640.3600000000001" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="middle" fill="#183044">localhost</text>
+<text x="836.0" y="1671.5600000000002" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="middle" fill="#183044">server.crt</text>
+<path d="M450,1653.8000000000002 L646,1653.8000000000002" fill="none" stroke="#23734b" stroke-width="2"/>
+<path d="M633.3937405670625,1659.8895174775573 L646,1653.8000000000002" fill="none" stroke="#23734b" stroke-width="2"/>
+<path d="M633.3937405670625,1647.710482522443 L646,1653.8000000000002" fill="none" stroke="#23734b" stroke-width="2"/>
+<text x="548.0" y="1634.5400000000002" font-family="Arial,Helvetica,sans-serif" font-size="21" text-anchor="middle" fill="#23734b">signs</text>
+<rect x="80" y="1715.8000000000002" width="936" height="94.4" rx="14" fill="#eaf3fc" stroke="#2463a6" stroke-width="2"/>
+<text x="98" y="1754.3600000000001" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">Trust store = the client's chosen list of trusted issuers. --cacert ca.crt supplies our CA</text>
+<text x="98" y="1785.5600000000002" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">to curl. -CAfile supplies it to OpenSSL. Self-signing alone creates no trust.</text>
+<rect x="80" y="1828.2000000000003" width="936" height="125.60000000000001" rx="14" fill="#eaf6ee" stroke="#23734b" stroke-width="2"/>
+<text x="98" y="1866.7600000000002" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">Client checks: signature path to a trusted CA, permitted use, name and dates. SAN =</text>
+<text x="98" y="1897.9600000000003" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">allowed names on the ID. The live server must also prove it holds the matching</text>
+<text x="98" y="1929.1600000000003" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">private key.</text>
+<rect x="80" y="1971.8000000000002" width="936" height="63.2" rx="14" fill="#fff6df" stroke="#9a650b" stroke-width="2"/>
+<text x="98" y="2010.3600000000001" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">SAY IT The CA signs the name-to-key link. The server proves it owns that key.</text>
+<text x="80" y="2194.8" font-family="Arial,Helvetica,sans-serif" font-size="20" text-anchor="start" fill="#506479">A valid certificate checks a named endpoint. It does not promise an honest website.</text>
+<rect x="1084" y="1254" width="1000" height="980" rx="14" fill="#ffffff" stroke="#ccd8e1" stroke-width="2"/>
+<rect x="1108" y="1280" width="66" height="54" rx="14" fill="#23734b" stroke="#23734b" stroke-width="2"/>
+<text x="1141.0" y="1315.2" font-family="Arial,Helvetica,sans-serif" font-size="30" text-anchor="middle" fill="#ffffff">05</text>
+<text x="1192" y="1314.08" font-family="Arial,Helvetica,sans-serif" font-size="32" text-anchor="start" fill="#23734b">TLS 1.3: the setup conversation</text>
+<text x="1116" y="1370.68" font-family="Arial,Helvetica,sans-serif" font-size="22" text-anchor="start" fill="#506479">Handshake = agree on methods and secrets, then check who is answering.</text>
+<rect x="1116" y="1424" width="180" height="63.2" rx="14" fill="#eaf3fc" stroke="#2463a6" stroke-width="2"/>
+<text x="1206.0" y="1462.56" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="middle" fill="#183044">CLIENT</text>
+<rect x="1872" y="1424" width="180" height="63.2" rx="14" fill="#eaf3fc" stroke="#2463a6" stroke-width="2"/>
+<text x="1962.0" y="1462.56" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="middle" fill="#183044">SERVER</text>
+<text x="1584.0" y="1529.62" font-family="Arial,Helvetica,sans-serif" font-size="23" text-anchor="middle" fill="#2463a6">1 ClientHello: choices + public key contribution</text>
+<path d="M1196,1549.9 L1972,1549.9" fill="none" stroke="#2463a6" stroke-width="2"/>
+<path d="M1959.3937405670624,1555.9895174775572 L1972,1549.9" fill="none" stroke="#2463a6" stroke-width="2"/>
+<path d="M1959.3937405670624,1543.810482522443 L1972,1549.9" fill="none" stroke="#2463a6" stroke-width="2"/>
+<text x="1584.0" y="1595.52" font-family="Arial,Helvetica,sans-serif" font-size="23" text-anchor="middle" fill="#2463a6">2 ServerHello: selection + public contribution</text>
+<path d="M1972,1615.8000000000002 L1196,1615.8000000000002" fill="none" stroke="#2463a6" stroke-width="2"/>
+<path d="M1208.6062594329376,1609.710482522443 L1196,1615.8000000000002" fill="none" stroke="#2463a6" stroke-width="2"/>
+<path d="M1208.6062594329376,1621.8895174775573 L1196,1615.8000000000002" fill="none" stroke="#2463a6" stroke-width="2"/>
+<text x="1584.0" y="1661.42" font-family="Arial,Helvetica,sans-serif" font-size="23" text-anchor="middle" fill="#23734b">3 Encrypted: Certificate + CertificateVerify + Finished</text>
+<path d="M1972,1681.7000000000003 L1196,1681.7000000000003" fill="none" stroke="#23734b" stroke-width="2"/>
+<path d="M1208.6062594329376,1675.6104825224431 L1196,1681.7000000000003" fill="none" stroke="#23734b" stroke-width="2"/>
+<path d="M1208.6062594329376,1687.7895174775574 L1196,1681.7000000000003" fill="none" stroke="#23734b" stroke-width="2"/>
+<text x="1584.0" y="1727.3200000000002" font-family="Arial,Helvetica,sans-serif" font-size="23" text-anchor="middle" fill="#23734b">4 Check the ID and proof. Send encrypted Finished.</text>
+<path d="M1196,1747.6000000000004 L1972,1747.6000000000004" fill="none" stroke="#23734b" stroke-width="2"/>
+<path d="M1959.3937405670624,1753.6895174775575 L1972,1747.6000000000004" fill="none" stroke="#23734b" stroke-width="2"/>
+<path d="M1959.3937405670624,1741.5104825224432 L1972,1747.6000000000004" fill="none" stroke="#23734b" stroke-width="2"/>
+<text x="1584.0" y="1793.2200000000003" font-family="Arial,Helvetica,sans-serif" font-size="23" text-anchor="middle" fill="#23734b">5 Encrypted HTTP GET /witness.txt</text>
+<path d="M1196,1813.5000000000005 L1972,1813.5000000000005" fill="none" stroke="#23734b" stroke-width="2"/>
+<path d="M1959.3937405670624,1819.5895174775576 L1972,1813.5000000000005" fill="none" stroke="#23734b" stroke-width="2"/>
+<path d="M1959.3937405670624,1807.4104825224433 L1972,1813.5000000000005" fill="none" stroke="#23734b" stroke-width="2"/>
+<text x="1584.0" y="1859.1200000000003" font-family="Arial,Helvetica,sans-serif" font-size="23" text-anchor="middle" fill="#23734b">6 Encrypted HTTP reply and file</text>
+<path d="M1972,1879.4000000000005 L1196,1879.4000000000005" fill="none" stroke="#23734b" stroke-width="2"/>
+<path d="M1208.6062594329376,1873.3104825224434 L1196,1879.4000000000005" fill="none" stroke="#23734b" stroke-width="2"/>
+<path d="M1208.6062594329376,1885.4895174775577 L1196,1879.4000000000005" fill="none" stroke="#23734b" stroke-width="2"/>
+<rect x="1116" y="1907.4000000000005" width="936" height="121.7" rx="14" fill="#eaf6ee" stroke="#23734b" stroke-width="2"/>
+<text x="1134" y="1945.0200000000004" font-family="Arial,Helvetica,sans-serif" font-size="23" text-anchor="start" fill="#183044">After ServerHello: both calculate handshake keys locally. CertificateVerify is the</text>
+<text x="1134" y="1974.9200000000005" font-family="Arial,Helvetica,sans-serif" font-size="23" text-anchor="start" fill="#183044">server's live signature. Finished checks the setup using its secrets. Application keys</text>
+<text x="1134" y="2004.8200000000004" font-family="Arial,Helvetica,sans-serif" font-size="23" text-anchor="start" fill="#183044">protect HTTP.</text>
+<rect x="1116" y="2045.1000000000006" width="936" height="94.4" rx="14" fill="#fff6df" stroke="#9a650b" stroke-width="2"/>
+<text x="1134" y="2083.6600000000003" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">SAY IT Public contributions cross the wire. The traffic secrets are calculated at the</text>
+<text x="1134" y="2114.86" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">ends.</text>
+<text x="1116" y="2194.8" font-family="Arial,Helvetica,sans-serif" font-size="20" text-anchor="start" fill="#506479">Simplified full handshake. No client certificate in this lab. Key share means public input.</text>
+<rect x="2120" y="1254" width="1000" height="980" rx="14" fill="#ffffff" stroke="#ccd8e1" stroke-width="2"/>
+<rect x="2144" y="1280" width="66" height="54" rx="14" fill="#2463a6" stroke="#2463a6" stroke-width="2"/>
+<text x="2177.0" y="1315.2" font-family="Arial,Helvetica,sans-serif" font-size="30" text-anchor="middle" fill="#ffffff">06</text>
+<text x="2228" y="1314.08" font-family="Arial,Helvetica,sans-serif" font-size="32" text-anchor="start" fill="#2463a6">Agree on a secret in public</text>
+<text x="2152" y="1370.68" font-family="Arial,Helvetica,sans-serif" font-size="22" text-anchor="start" fill="#506479">Public = safe to show. Secret inputs stay at the endpoints. Paint is only an analogy.</text>
+<rect x="2152" y="1424" width="374.40000000000003" height="55.900000000000006" rx="0" fill="#eaf3fc" stroke="#cad5df" stroke-width="2"/>
+<text x="2164" y="1458.62" font-family="Arial,Helvetica,sans-serif" font-size="23" text-anchor="start" fill="#2463a6">Observer sees</text>
+<rect x="2526.4" y="1424" width="561.6" height="55.900000000000006" rx="0" fill="#eaf3fc" stroke="#cad5df" stroke-width="2"/>
+<text x="2538.4" y="1458.62" font-family="Arial,Helvetica,sans-serif" font-size="23" text-anchor="start" fill="#2463a6">Observer cannot read without secrets</text>
+<rect x="2152" y="1479.9" width="374.40000000000003" height="55.900000000000006" rx="0" fill="#ffffff" stroke="#cad5df" stroke-width="2"/>
+<text x="2164" y="1514.52" font-family="Arial,Helvetica,sans-serif" font-size="23" text-anchor="start" fill="#183044">Addresses and ports</text>
+<rect x="2526.4" y="1479.9" width="561.6" height="55.900000000000006" rx="0" fill="#ffffff" stroke="#cad5df" stroke-width="2"/>
+<text x="2538.4" y="1514.52" font-family="Arial,Helvetica,sans-serif" font-size="23" text-anchor="start" fill="#183044">HTTP request path and headers</text>
+<rect x="2152" y="1535.8000000000002" width="374.40000000000003" height="55.900000000000006" rx="0" fill="#f0f3f6" stroke="#cad5df" stroke-width="2"/>
+<text x="2164" y="1570.42" font-family="Arial,Helvetica,sans-serif" font-size="23" text-anchor="start" fill="#183044">Packet sizes and timing</text>
+<rect x="2526.4" y="1535.8000000000002" width="561.6" height="55.900000000000006" rx="0" fill="#f0f3f6" stroke="#cad5df" stroke-width="2"/>
+<text x="2538.4" y="1570.42" font-family="Arial,Helvetica,sans-serif" font-size="23" text-anchor="start" fill="#183044">Witness file content</text>
+<rect x="2152" y="1591.7000000000003" width="374.40000000000003" height="55.900000000000006" rx="0" fill="#ffffff" stroke="#cad5df" stroke-width="2"/>
+<text x="2164" y="1626.3200000000002" font-family="Arial,Helvetica,sans-serif" font-size="23" text-anchor="start" fill="#183044">ClientHello, ServerHello</text>
+<rect x="2526.4" y="1591.7000000000003" width="561.6" height="55.900000000000006" rx="0" fill="#ffffff" stroke="#cad5df" stroke-width="2"/>
+<text x="2538.4" y="1626.3200000000002" font-family="Arial,Helvetica,sans-serif" font-size="23" text-anchor="start" fill="#183044">TLS 1.3 certificate and later setup</text>
+<text x="2152" y="1687.1000000000004" font-family="Arial,Helvetica,sans-serif" font-size="25" text-anchor="start" fill="#2463a6">Secret establishment, pictured with paint</text>
+<ellipse cx="2175.0" cy="1727.1000000000004" rx="17.0" ry="17.0" fill="#e65353" stroke="#183044" stroke-width="2"/>
+<text x="2204" y="1731.8400000000004" font-family="Arial,Helvetica,sans-serif" font-size="21" text-anchor="start" fill="#183044">Client's secret red</text>
+<ellipse cx="2519.0" cy="1727.1000000000004" rx="17.0" ry="17.0" fill="#f4cf47" stroke="#183044" stroke-width="2"/>
+<text x="2548" y="1731.8400000000004" font-family="Arial,Helvetica,sans-serif" font-size="21" text-anchor="start" fill="#183044">Public yellow</text>
+<ellipse cx="2819.0" cy="1727.1000000000004" rx="17.0" ry="17.0" fill="#4596e5" stroke="#183044" stroke-width="2"/>
+<text x="2848" y="1731.8400000000004" font-family="Arial,Helvetica,sans-serif" font-size="21" text-anchor="start" fill="#183044">Server's secret blue</text>
+<ellipse cx="2175.0" cy="1787.1000000000004" rx="17.0" ry="17.0" fill="#ff9a43" stroke="#183044" stroke-width="2"/>
+<text x="2204" y="1791.8400000000004" font-family="Arial,Helvetica,sans-serif" font-size="21" text-anchor="start" fill="#183044">Mix: orange</text>
+<ellipse cx="2819.0" cy="1787.1000000000004" rx="17.0" ry="17.0" fill="#65aa66" stroke="#183044" stroke-width="2"/>
+<text x="2848" y="1791.8400000000004" font-family="Arial,Helvetica,sans-serif" font-size="21" text-anchor="start" fill="#183044">Mix: green</text>
+<path d="M2442,1777.1000000000004 L2772,1777.1000000000004" fill="none" stroke="#2463a6" stroke-width="2"/>
+<path d="M2759.3937405670627,1783.1895174775575 L2772,1777.1000000000004" fill="none" stroke="#2463a6" stroke-width="2"/>
+<path d="M2759.3937405670627,1771.0104825224432 L2772,1777.1000000000004" fill="none" stroke="#2463a6" stroke-width="2"/>
+<path d="M2772,1801.1000000000004 L2442,1801.1000000000004" fill="none" stroke="#2463a6" stroke-width="2"/>
+<path d="M2454.6062594329373,1795.0104825224432 L2442,1801.1000000000004" fill="none" stroke="#2463a6" stroke-width="2"/>
+<path d="M2454.6062594329373,1807.1895174775575 L2442,1801.1000000000004" fill="none" stroke="#2463a6" stroke-width="2"/>
+<ellipse cx="2175.0" cy="1847.1000000000004" rx="17.0" ry="17.0" fill="#986e4e" stroke="#183044" stroke-width="2"/>
+<text x="2204" y="1851.8400000000004" font-family="Arial,Helvetica,sans-serif" font-size="21" text-anchor="start" fill="#183044">green + secret red</text>
+<ellipse cx="2819.0" cy="1847.1000000000004" rx="17.0" ry="17.0" fill="#986e4e" stroke="#183044" stroke-width="2"/>
+<text x="2848" y="1851.8400000000004" font-family="Arial,Helvetica,sans-serif" font-size="21" text-anchor="start" fill="#183044">orange + secret blue</text>
+<text x="2637.0" y="1852.7800000000004" font-family="Arial,Helvetica,sans-serif" font-size="22" text-anchor="middle" fill="#23734b">Same final mix</text>
+<text x="2152" y="1899.7200000000003" font-family="Arial,Helvetica,sans-serif" font-size="23" text-anchor="start" fill="#183044">The observer sees yellow, orange and green, but lacks red and blue. Real ECDHE uses</text>
+<text x="2152" y="1929.6200000000003" font-family="Arial,Helvetica,sans-serif" font-size="23" text-anchor="start" fill="#183044">mathematics and temporary private inputs, not paint.</text>
+<rect x="2152" y="1953.9000000000003" width="936" height="91.80000000000001" rx="14" fill="#f0f3f6" stroke="#cad5df" stroke-width="2"/>
+<text x="2170" y="1991.5200000000002" font-family="Arial,Helvetica,sans-serif" font-size="23" text-anchor="start" fill="#183044">Saved probe: X25519MLKEM768 combines two methods. The paint picture illustrates</text>
+<text x="2170" y="2021.4200000000003" font-family="Arial,Helvetica,sans-serif" font-size="23" text-anchor="start" fill="#183044">its X25519 side only. See the guide for the probe / capture distinction.</text>
+<rect x="2152" y="2061.7000000000003" width="936" height="94.4" rx="14" fill="#fff6df" stroke="#9a650b" stroke-width="2"/>
+<text x="2170" y="2100.26" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">SAY IT Public contributions let the endpoints calculate matching secrets without</text>
+<text x="2170" y="2131.46" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">sending those secrets.</text>
+<text x="2152" y="2194.8" font-family="Arial,Helvetica,sans-serif" font-size="20" text-anchor="start" fill="#506479">Ephemeral = temporary. Derived keys = keys calculated from secret material and the setup.</text>
+<rect x="48" y="2270" width="1000" height="980" rx="14" fill="#ffffff" stroke="#ccd8e1" stroke-width="2"/>
+<rect x="72" y="2296" width="66" height="54" rx="14" fill="#7151a8" stroke="#7151a8" stroke-width="2"/>
+<text x="105.0" y="2331.2" font-family="Arial,Helvetica,sans-serif" font-size="30" text-anchor="middle" fill="#ffffff">07</text>
+<text x="156" y="2330.08" font-family="Arial,Helvetica,sans-serif" font-size="32" text-anchor="start" fill="#7151a8">Why the old recording opens</text>
+<text x="80" y="2386.68" font-family="Arial,Helvetica,sans-serif" font-size="22" text-anchor="start" fill="#506479">Same RSA server key. Different way of establishing the connection secrets.</text>
+<rect x="80.0" y="2440" width="459.0" height="281.6" rx="14" fill="#fff0f0" stroke="#b33a45" stroke-width="2"/>
+<text x="98.0" y="2478.56" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">TLS 1.2: STATIC RSA</text>
+<text x="98.0" y="2509.7599999999998" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">Client makes a starting secret and</text>
+<text x="98.0" y="2540.96" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">encrypts it with the server's RSA public</text>
+<text x="98.0" y="2572.16" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">key.</text>
+<text x="98.0" y="2603.36" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044"></text>
+<text x="98.0" y="2634.56" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">Later: stolen server.key opens that</text>
+<text x="98.0" y="2665.7599999999998" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">recorded secret. Data keys can be</text>
+<text x="98.0" y="2696.96" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">reconstructed.</text>
+<rect x="557.0" y="2440" width="459.0" height="281.6" rx="14" fill="#eaf6ee" stroke="#23734b" stroke-width="2"/>
+<text x="575.0" y="2478.56" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">OUR TLS 1.3 EXCHANGE</text>
+<text x="575.0" y="2509.7599999999998" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">Temporary private inputs establish</text>
+<text x="575.0" y="2540.96" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">secrets separately from the RSA</text>
+<text x="575.0" y="2572.16" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">identity key.</text>
+<text x="575.0" y="2603.36" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044"></text>
+<text x="575.0" y="2634.56" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">Later: server.key alone cannot recreate</text>
+<text x="575.0" y="2665.7599999999998" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">past traffic keys from the recording.</text>
+<rect x="80" y="2739.6" width="936" height="125.60000000000001" rx="14" fill="#f3eefa" stroke="#7151a8" stroke-width="2"/>
+<text x="98" y="2778.16" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">Forward secrecy = later theft of the long-term identity key does not by itself reveal</text>
+<text x="98" y="2809.3599999999997" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">past data keys, when temporary secrets are erased. A stolen ID stamp does not</text>
+<text x="98" y="2840.56" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">recreate yesterday's disposable box keys.</text>
+<rect x="80" y="2883.2" width="936" height="121.7" rx="14" fill="#f0f3f6" stroke="#cad5df" stroke-width="2"/>
+<text x="98" y="2920.8199999999997" font-family="Arial,Helvetica,sans-serif" font-size="23" text-anchor="start" fill="#183044">Our forced old suite: TLS_RSA_WITH_AES_128_GCM_SHA256 (0x009c). RSA wraps</text>
+<text x="98" y="2950.72" font-family="Arial,Helvetica,sans-serif" font-size="23" text-anchor="start" fill="#183044">the starting secret. AES-GCM protects the HTTP data. TLS 1.2 with ECDHE can</text>
+<text x="98" y="2980.62" font-family="Arial,Helvetica,sans-serif" font-size="23" text-anchor="start" fill="#183044">provide forward secrecy.</text>
+<rect x="80" y="3022.8999999999996" width="936" height="94.4" rx="14" fill="#fff6df" stroke="#9a650b" stroke-width="2"/>
+<text x="98" y="3061.4599999999996" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">SAY IT We exposed an old configuration's dependency on the server key. We did</text>
+<text x="98" y="3092.6599999999994" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">not break AES.</text>
+<text x="80" y="3210.8" font-family="Arial,Helvetica,sans-serif" font-size="20" text-anchor="start" fill="#506479">Evidence: t_tls12 and t_tls13. Full suitable handshake + matching RSA key are required.</text>
+<rect x="1084" y="2270" width="1000" height="980" rx="14" fill="#ffffff" stroke="#ccd8e1" stroke-width="2"/>
+<rect x="1108" y="2296" width="66" height="54" rx="14" fill="#7151a8" stroke="#7151a8" stroke-width="2"/>
+<text x="1141.0" y="2331.2" font-family="Arial,Helvetica,sans-serif" font-size="30" text-anchor="middle" fill="#ffffff">08</text>
+<text x="1192" y="2330.08" font-family="Arial,Helvetica,sans-serif" font-size="32" text-anchor="start" fill="#7151a8">Wireshark needs the right secret</text>
+<text x="1116" y="2386.68" font-family="Arial,Helvetica,sans-serif" font-size="22" text-anchor="start" fill="#506479">Capturing packets records bytes. Decrypting them also requires suitable secret material.</text>
+<rect x="1116" y="2440" width="234.0" height="55.900000000000006" rx="0" fill="#eaf3fc" stroke="#cad5df" stroke-width="2"/>
+<text x="1128" y="2474.62" font-family="Arial,Helvetica,sans-serif" font-size="23" text-anchor="start" fill="#2463a6">Capture</text>
+<rect x="1350.0" y="2440" width="439.91999999999996" height="55.900000000000006" rx="0" fill="#eaf3fc" stroke="#cad5df" stroke-width="2"/>
+<text x="1362.0" y="2474.62" font-family="Arial,Helvetica,sans-serif" font-size="23" text-anchor="start" fill="#2463a6">Extra input</text>
+<rect x="1789.92" y="2440" width="262.08000000000004" height="55.900000000000006" rx="0" fill="#eaf3fc" stroke="#cad5df" stroke-width="2"/>
+<text x="1801.92" y="2474.62" font-family="Arial,Helvetica,sans-serif" font-size="23" text-anchor="start" fill="#2463a6">Read file?</text>
+<rect x="1116" y="2495.9" width="234.0" height="55.900000000000006" rx="0" fill="#ffffff" stroke="#cad5df" stroke-width="2"/>
+<text x="1128" y="2530.52" font-family="Arial,Helvetica,sans-serif" font-size="23" text-anchor="start" fill="#183044">TLS 1.3</text>
+<rect x="1350.0" y="2495.9" width="439.91999999999996" height="55.900000000000006" rx="0" fill="#ffffff" stroke="#cad5df" stroke-width="2"/>
+<text x="1362.0" y="2530.52" font-family="Arial,Helvetica,sans-serif" font-size="23" text-anchor="start" fill="#183044">None</text>
+<rect x="1789.92" y="2495.9" width="262.08000000000004" height="55.900000000000006" rx="0" fill="#ffffff" stroke="#cad5df" stroke-width="2"/>
+<text x="1801.92" y="2530.52" font-family="Arial,Helvetica,sans-serif" font-size="23" text-anchor="start" fill="#183044">No</text>
+<rect x="1116" y="2551.8" width="234.0" height="55.900000000000006" rx="0" fill="#f0f3f6" stroke="#cad5df" stroke-width="2"/>
+<text x="1128" y="2586.42" font-family="Arial,Helvetica,sans-serif" font-size="23" text-anchor="start" fill="#183044">TLS 1.3</text>
+<rect x="1350.0" y="2551.8" width="439.91999999999996" height="55.900000000000006" rx="0" fill="#f0f3f6" stroke="#cad5df" stroke-width="2"/>
+<text x="1362.0" y="2586.42" font-family="Arial,Helvetica,sans-serif" font-size="23" text-anchor="start" fill="#183044">server.key only</text>
+<rect x="1789.92" y="2551.8" width="262.08000000000004" height="55.900000000000006" rx="0" fill="#f0f3f6" stroke="#cad5df" stroke-width="2"/>
+<text x="1801.92" y="2586.42" font-family="Arial,Helvetica,sans-serif" font-size="23" text-anchor="start" fill="#183044">No</text>
+<rect x="1116" y="2607.7000000000003" width="234.0" height="55.900000000000006" rx="0" fill="#ffffff" stroke="#cad5df" stroke-width="2"/>
+<text x="1128" y="2642.32" font-family="Arial,Helvetica,sans-serif" font-size="23" text-anchor="start" fill="#183044">TLS 1.3</text>
+<rect x="1350.0" y="2607.7000000000003" width="439.91999999999996" height="55.900000000000006" rx="0" fill="#ffffff" stroke="#cad5df" stroke-width="2"/>
+<text x="1362.0" y="2642.32" font-family="Arial,Helvetica,sans-serif" font-size="23" text-anchor="start" fill="#183044">Matching tls13.keys</text>
+<rect x="1789.92" y="2607.7000000000003" width="262.08000000000004" height="55.900000000000006" rx="0" fill="#ffffff" stroke="#cad5df" stroke-width="2"/>
+<text x="1801.92" y="2642.32" font-family="Arial,Helvetica,sans-serif" font-size="23" text-anchor="start" fill="#183044">Yes</text>
+<rect x="1116" y="2663.6000000000004" width="234.0" height="55.900000000000006" rx="0" fill="#f0f3f6" stroke="#cad5df" stroke-width="2"/>
+<text x="1128" y="2698.2200000000003" font-family="Arial,Helvetica,sans-serif" font-size="23" text-anchor="start" fill="#183044">TLS 1.2 RSA</text>
+<rect x="1350.0" y="2663.6000000000004" width="439.91999999999996" height="55.900000000000006" rx="0" fill="#f0f3f6" stroke="#cad5df" stroke-width="2"/>
+<text x="1362.0" y="2698.2200000000003" font-family="Arial,Helvetica,sans-serif" font-size="23" text-anchor="start" fill="#183044">None</text>
+<rect x="1789.92" y="2663.6000000000004" width="262.08000000000004" height="55.900000000000006" rx="0" fill="#f0f3f6" stroke="#cad5df" stroke-width="2"/>
+<text x="1801.92" y="2698.2200000000003" font-family="Arial,Helvetica,sans-serif" font-size="23" text-anchor="start" fill="#183044">No</text>
+<rect x="1116" y="2719.5000000000005" width="234.0" height="55.900000000000006" rx="0" fill="#ffffff" stroke="#cad5df" stroke-width="2"/>
+<text x="1128" y="2754.1200000000003" font-family="Arial,Helvetica,sans-serif" font-size="23" text-anchor="start" fill="#183044">TLS 1.2 RSA</text>
+<rect x="1350.0" y="2719.5000000000005" width="439.91999999999996" height="55.900000000000006" rx="0" fill="#ffffff" stroke="#cad5df" stroke-width="2"/>
+<text x="1362.0" y="2754.1200000000003" font-family="Arial,Helvetica,sans-serif" font-size="23" text-anchor="start" fill="#183044">Matching server.key</text>
+<rect x="1789.92" y="2719.5000000000005" width="262.08000000000004" height="55.900000000000006" rx="0" fill="#ffffff" stroke="#cad5df" stroke-width="2"/>
+<text x="1801.92" y="2754.1200000000003" font-family="Arial,Helvetica,sans-serif" font-size="23" text-anchor="start" fill="#183044">Yes</text>
+<rect x="1116" y="2793.4000000000005" width="936" height="94.4" rx="14" fill="#f3eefa" stroke="#7151a8" stroke-width="2"/>
+<text x="1134" y="2831.9600000000005" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">Our server's -keylogfile exports connection secrets. Wireshark can then calculate the</text>
+<text x="1134" y="2863.1600000000003" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">data keys. This is endpoint-assisted decryption, not a break from packets alone.</text>
+<rect x="1116" y="2905.8000000000006" width="936" height="121.7" rx="14" fill="#fff6df" stroke="#9a650b" stroke-width="2"/>
+<text x="1134" y="2943.4200000000005" font-family="Arial,Helvetica,sans-serif" font-size="23" text-anchor="start" fill="#183044">tls13.pcapng = original, no embedded secrets.</text>
+<text x="1134" y="2973.3200000000006" font-family="Arial,Helvetica,sans-serif" font-size="23" text-anchor="start" fill="#183044">tls13-with-keys.pcapng = copy with secrets inside. It opens decrypted. Clear Wireshark</text>
+<text x="1134" y="3003.2200000000007" font-family="Arial,Helvetica,sans-serif" font-size="23" text-anchor="start" fill="#183044">secrets or use separate profiles for comparisons.</text>
+<rect x="1116" y="3045.5000000000005" width="936" height="63.2" rx="14" fill="#fff6df" stroke="#9a650b" stroke-width="2"/>
+<text x="1134" y="3084.0600000000004" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">SAY IT The key log supplies exactly what the ordinary observer is missing.</text>
+<text x="1116" y="3210.8" font-family="Arial,Helvetica,sans-serif" font-size="20" text-anchor="start" fill="#506479">Evidence: existing t_tls13 and t_tls12 decryption checks.</text>
+<rect x="2120" y="2270" width="1000" height="980" rx="14" fill="#ffffff" stroke="#ccd8e1" stroke-width="2"/>
+<rect x="2144" y="2296" width="66" height="54" rx="14" fill="#b33a45" stroke="#b33a45" stroke-width="2"/>
+<text x="2177.0" y="2331.2" font-family="Arial,Helvetica,sans-serif" font-size="30" text-anchor="middle" fill="#ffffff">09</text>
+<text x="2228" y="2330.08" font-family="Arial,Helvetica,sans-serif" font-size="32" text-anchor="start" fill="#b33a45">The fake server: refusal is success</text>
+<text x="2152" y="2386.68" font-family="Arial,Helvetica,sans-serif" font-size="22" text-anchor="start" fill="#506479">Fake server on port 9443. Same name, localhost. Different self-signed certificate.</text>
+<rect x="2152" y="2440" width="936" height="125.60000000000001" rx="14" fill="#eaf6ee" stroke="#23734b" stroke-width="2"/>
+<text x="2170" y="2478.56" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">VERIFY ON</text>
+<text x="2170" y="2509.7599999999998" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">Client trusts Lab CA -&gt; fake ID has no path to it -&gt; curl error 60 -&gt; HTTP witness is</text>
+<text x="2170" y="2540.96" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">not sent. TLS setup bytes still reach the fake server.</text>
+<rect x="2152" y="2583.6" width="936" height="125.60000000000001" rx="14" fill="#fff0f0" stroke="#b33a45" stroke-width="2"/>
+<text x="2170" y="2622.16" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">VERIFY OFF: --insecure</text>
+<text x="2170" y="2653.3599999999997" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">Client skips the ID check -&gt; encrypts for the fake server -&gt; fake server decrypts its</text>
+<text x="2170" y="2684.56" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">own incoming request -&gt; witness appears in its log.</text>
+<rect x="2152.0" y="2727.2" width="459.0" height="125.60000000000001" rx="14" fill="#eaf3fc" stroke="#2463a6" stroke-width="2"/>
+<text x="2170.0" y="2765.7599999999998" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">Name match alone</text>
+<text x="2170.0" y="2796.9599999999996" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">Anyone can print localhost on a</text>
+<text x="2170.0" y="2828.16" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">self-signed ID.</text>
+<rect x="2629.0" y="2727.2" width="459.0" height="125.60000000000001" rx="14" fill="#fff0f0" stroke="#b33a45" stroke-width="2"/>
+<text x="2647.0" y="2765.7599999999998" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">Encryption alone</text>
+<text x="2647.0" y="2796.9599999999996" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">A thief can open a box you locked for</text>
+<text x="2647.0" y="2828.16" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">the thief.</text>
+<rect x="2152" y="2870.7999999999997" width="936" height="121.7" rx="14" fill="#f0f3f6" stroke="#cad5df" stroke-width="2"/>
+<text x="2170" y="2908.4199999999996" font-family="Arial,Helvetica,sans-serif" font-size="23" text-anchor="start" fill="#183044">Why the timeout? The fake server logs the POST but sends no normal HTTP reply. The</text>
+<text x="2170" y="2938.3199999999997" font-family="Arial,Helvetica,sans-serif" font-size="23" text-anchor="start" fill="#183044">two-second timeout does not prove delivery failed. The server log proves the witness</text>
+<text x="2170" y="2968.22" font-family="Arial,Helvetica,sans-serif" font-size="23" text-anchor="start" fill="#183044">arrived.</text>
+<rect x="2152" y="3010.4999999999995" width="936" height="94.4" rx="14" fill="#fff6df" stroke="#9a650b" stroke-width="2"/>
+<text x="2170" y="3049.0599999999995" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">SAY IT TLS protected the delivery to the wrong recipient after we disabled its identity</text>
+<text x="2170" y="3080.2599999999993" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">check.</text>
+<text x="2152" y="3210.8" font-family="Arial,Helvetica,sans-serif" font-size="20" text-anchor="start" fill="#506479">Evidence: t_fake. Direct fake-server test, not a transparent man-in-the-middle interception.</text>
+<rect x="48" y="3286" width="1000" height="980" rx="14" fill="#ffffff" stroke="#ccd8e1" stroke-width="2"/>
+<rect x="72" y="3312" width="66" height="54" rx="14" fill="#2463a6" stroke="#2463a6" stroke-width="2"/>
+<text x="105.0" y="3347.2" font-family="Arial,Helvetica,sans-serif" font-size="30" text-anchor="middle" fill="#ffffff">10</text>
+<text x="156" y="3346.08" font-family="Arial,Helvetica,sans-serif" font-size="32" text-anchor="start" fill="#2463a6">Read the commands as actions</text>
+<text x="80" y="3402.68" font-family="Arial,Helvetica,sans-serif" font-size="22" text-anchor="start" fill="#506479">Port 8443: the service, the probe and the curl download are distinct operations.</text>
+<rect x="80" y="3456" width="411.84" height="54.6" rx="0" fill="#eaf3fc" stroke="#cad5df" stroke-width="2"/>
+<text x="92" y="3489.68" font-family="Arial,Helvetica,sans-serif" font-size="22" text-anchor="start" fill="#2463a6">Command part</text>
+<rect x="491.84" y="3456" width="524.1600000000001" height="54.6" rx="0" fill="#eaf3fc" stroke="#cad5df" stroke-width="2"/>
+<text x="503.84" y="3489.68" font-family="Arial,Helvetica,sans-serif" font-size="22" text-anchor="start" fill="#2463a6">Plain meaning</text>
+<rect x="80" y="3510.6" width="411.84" height="54.6" rx="0" fill="#ffffff" stroke="#cad5df" stroke-width="2"/>
+<text x="92" y="3544.2799999999997" font-family="Arial,Helvetica,sans-serif" font-size="22" text-anchor="start" fill="#183044">s_server -tls1_3</text>
+<rect x="491.84" y="3510.6" width="524.1600000000001" height="54.6" rx="0" fill="#ffffff" stroke="#cad5df" stroke-width="2"/>
+<text x="503.84" y="3544.2799999999997" font-family="Arial,Helvetica,sans-serif" font-size="22" text-anchor="start" fill="#183044">Listen for TLS 1.3 connections.</text>
+<rect x="80" y="3565.2" width="411.84" height="54.6" rx="0" fill="#f0f3f6" stroke="#cad5df" stroke-width="2"/>
+<text x="92" y="3598.8799999999997" font-family="Arial,Helvetica,sans-serif" font-size="22" text-anchor="start" fill="#183044">-cert / -key</text>
+<rect x="491.84" y="3565.2" width="524.1600000000001" height="54.6" rx="0" fill="#f0f3f6" stroke="#cad5df" stroke-width="2"/>
+<text x="503.84" y="3598.8799999999997" font-family="Arial,Helvetica,sans-serif" font-size="22" text-anchor="start" fill="#183044">Present public ID / use private key.</text>
+<rect x="80" y="3619.7999999999997" width="411.84" height="54.6" rx="0" fill="#ffffff" stroke="#cad5df" stroke-width="2"/>
+<text x="92" y="3653.4799999999996" font-family="Arial,Helvetica,sans-serif" font-size="22" text-anchor="start" fill="#183044">-WWW</text>
+<rect x="491.84" y="3619.7999999999997" width="524.1600000000001" height="54.6" rx="0" fill="#ffffff" stroke="#cad5df" stroke-width="2"/>
+<text x="503.84" y="3653.4799999999996" font-family="Arial,Helvetica,sans-serif" font-size="22" text-anchor="start" fill="#183044">Serve files from the current folder.</text>
+<rect x="80" y="3674.3999999999996" width="411.84" height="83.2" rx="0" fill="#f0f3f6" stroke="#cad5df" stroke-width="2"/>
+<text x="92" y="3708.0799999999995" font-family="Arial,Helvetica,sans-serif" font-size="22" text-anchor="start" fill="#183044">--resolve localhost:8443:127.0.0.1</text>
+<rect x="491.84" y="3674.3999999999996" width="524.1600000000001" height="83.2" rx="0" fill="#f0f3f6" stroke="#cad5df" stroke-width="2"/>
+<text x="503.84" y="3708.0799999999995" font-family="Arial,Helvetica,sans-serif" font-size="22" text-anchor="start" fill="#183044">Connect locally. Keep localhost as the name being</text>
+<text x="503.84" y="3736.6799999999994" font-family="Arial,Helvetica,sans-serif" font-size="22" text-anchor="start" fill="#183044">checked.</text>
+<rect x="80" y="3757.5999999999995" width="411.84" height="54.6" rx="0" fill="#ffffff" stroke="#cad5df" stroke-width="2"/>
+<text x="92" y="3791.2799999999993" font-family="Arial,Helvetica,sans-serif" font-size="22" text-anchor="start" fill="#183044">--cacert ca.crt</text>
+<rect x="491.84" y="3757.5999999999995" width="524.1600000000001" height="54.6" rx="0" fill="#ffffff" stroke="#cad5df" stroke-width="2"/>
+<text x="503.84" y="3791.2799999999993" font-family="Arial,Helvetica,sans-serif" font-size="22" text-anchor="start" fill="#183044">Supply our trusted CA to curl.</text>
+<rect x="80" y="3812.1999999999994" width="411.84" height="54.6" rx="0" fill="#f0f3f6" stroke="#cad5df" stroke-width="2"/>
+<text x="92" y="3845.879999999999" font-family="Arial,Helvetica,sans-serif" font-size="22" text-anchor="start" fill="#183044">-verify_hostname localhost</text>
+<rect x="491.84" y="3812.1999999999994" width="524.1600000000001" height="54.6" rx="0" fill="#f0f3f6" stroke="#cad5df" stroke-width="2"/>
+<text x="503.84" y="3845.879999999999" font-family="Arial,Helvetica,sans-serif" font-size="22" text-anchor="start" fill="#183044">OpenSSL checks this server name.</text>
+<rect x="80" y="3866.7999999999993" width="411.84" height="54.6" rx="0" fill="#ffffff" stroke="#cad5df" stroke-width="2"/>
+<text x="92" y="3900.479999999999" font-family="Arial,Helvetica,sans-serif" font-size="22" text-anchor="start" fill="#183044">-verify_return_error</text>
+<rect x="491.84" y="3866.7999999999993" width="524.1600000000001" height="54.6" rx="0" fill="#ffffff" stroke="#cad5df" stroke-width="2"/>
+<text x="503.84" y="3900.479999999999" font-family="Arial,Helvetica,sans-serif" font-size="22" text-anchor="start" fill="#183044">OpenSSL stops on verification failure.</text>
+<rect x="80" y="3939.399999999999" width="936" height="121.7" rx="14" fill="#eaf3fc" stroke="#2463a6" stroke-width="2"/>
+<text x="98" y="3977.019999999999" font-family="Arial,Helvetica,sans-serif" font-size="23" text-anchor="start" fill="#183044">TLS_AES_256_GCM_SHA384</text>
+<text x="98" y="4006.919999999999" font-family="Arial,Helvetica,sans-serif" font-size="23" text-anchor="start" fill="#183044">AES-256 + GCM: data encryption and alteration check. SHA-384: hashing for setup and</text>
+<text x="98" y="4036.8199999999993" font-family="Arial,Helvetica,sans-serif" font-size="23" text-anchor="start" fill="#183044">key derivation. TLS 1.3 reports the exchange and signature methods separately.</text>
+<rect x="80" y="4079.099999999999" width="936" height="94.4" rx="14" fill="#fff6df" stroke="#9a650b" stroke-width="2"/>
+<text x="98" y="4117.659999999999" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">SAY IT The probe checks a connection. curl downloads the file in another</text>
+<text x="98" y="4148.859999999999" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">connection.</text>
+<text x="80" y="4226.8" font-family="Arial,Helvetica,sans-serif" font-size="20" text-anchor="start" fill="#506479">-servername selects the requested host. That option alone does not verify the hostname.</text>
+<rect x="1084" y="3286" width="1000" height="980" rx="14" fill="#ffffff" stroke="#ccd8e1" stroke-width="2"/>
+<rect x="1108" y="3312" width="66" height="54" rx="14" fill="#2463a6" stroke="#2463a6" stroke-width="2"/>
+<text x="1141.0" y="3347.2" font-family="Arial,Helvetica,sans-serif" font-size="30" text-anchor="middle" fill="#ffffff">11</text>
+<text x="1192" y="3346.08" font-family="Arial,Helvetica,sans-serif" font-size="32" text-anchor="start" fill="#2463a6">SSH: same goals, separate protocol</text>
+<text x="1116" y="3402.68" font-family="Arial,Helvetica,sans-serif" font-size="22" text-anchor="start" fill="#506479">SSH protects remote commands. It does not run the shell inside TLS.</text>
+<rect x="1116.0" y="3456" width="459.0" height="219.20000000000002" rx="14" fill="#eaf3fc" stroke="#2463a6" stroke-width="2"/>
+<text x="1134.0" y="3494.56" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">1 CLIENT CHECKS SERVER</text>
+<text x="1134.0" y="3525.7599999999998" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">Server has an Ed25519 host key. The</text>
+<text x="1134.0" y="3556.96" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">real public key is preloaded in</text>
+<text x="1134.0" y="3588.16" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">known_hosts.</text>
+<text x="1134.0" y="3619.36" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">StrictHostKeyChecking=yes requires</text>
+<text x="1134.0" y="3650.56" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">that identity.</text>
+<rect x="1593.0" y="3456" width="459.0" height="219.20000000000002" rx="14" fill="#f3eefa" stroke="#7151a8" stroke-width="2"/>
+<text x="1611.0" y="3494.56" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">2 SERVER CHECKS CLIENT</text>
+<text x="1611.0" y="3525.7599999999998" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">Client has a separate key pair. Its</text>
+<text x="1611.0" y="3556.96" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">public key is in authorized_keys. The</text>
+<text x="1611.0" y="3588.16" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">client proves possession of its private</text>
+<text x="1611.0" y="3619.36" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">key to log in.</text>
+<rect x="1116" y="3693.2" width="936" height="94.4" rx="14" fill="#f0f3f6" stroke="#cad5df" stroke-width="2"/>
+<text x="1134" y="3731.7599999999998" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">Fingerprint = a short digest used to identify a public key. The lab saves the host</text>
+<text x="1134" y="3762.9599999999996" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">fingerprint. Password login is disabled for this SSH server.</text>
+<rect x="1116" y="3805.6" width="936" height="125.60000000000001" rx="14" fill="#eaf6ee" stroke="#23734b" stroke-width="2"/>
+<text x="1134" y="3844.16" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">The client prints the witness in its terminal. Wireshark sees the SSH-2.0</text>
+<text x="1134" y="3875.3599999999997" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">identification, but the witness is absent from the saved capture. Endpoint visibility and</text>
+<text x="1134" y="3906.56" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">network visibility are different.</text>
+<rect x="1116" y="3949.2" width="936" height="94.4" rx="14" fill="#fff6df" stroke="#9a650b" stroke-width="2"/>
+<text x="1134" y="3987.7599999999998" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">SAY IT SSH trusts a preloaded host key here. TLS trusts a server ID signed by our</text>
+<text x="1134" y="4018.9599999999996" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">selected CA.</text>
+<text x="1116" y="4226.8" font-family="Arial,Helvetica,sans-serif" font-size="20" text-anchor="start" fill="#506479">Evidence: t_ssh and config/sshd_config. The host and client keys have different roles.</text>
+<rect x="2120" y="3286" width="1000" height="980" rx="14" fill="#ffffff" stroke="#ccd8e1" stroke-width="2"/>
+<rect x="2144" y="3312" width="66" height="54" rx="14" fill="#9a650b" stroke="#9a650b" stroke-width="2"/>
+<text x="2177.0" y="3347.2" font-family="Arial,Helvetica,sans-serif" font-size="30" text-anchor="middle" fill="#ffffff">12</text>
+<text x="2228" y="3346.08" font-family="Arial,Helvetica,sans-serif" font-size="32" text-anchor="start" fill="#9a650b">Explain the result, not just the label</text>
+<text x="2152" y="3402.68" font-family="Arial,Helvetica,sans-serif" font-size="22" text-anchor="start" fill="#506479">Cover the answers. Explain each cause in your own words.</text>
+<rect x="2152" y="3456" width="374.40000000000003" height="54.6" rx="0" fill="#eaf3fc" stroke="#cad5df" stroke-width="2"/>
+<text x="2164" y="3489.68" font-family="Arial,Helvetica,sans-serif" font-size="22" text-anchor="start" fill="#2463a6">Teacher asks</text>
+<rect x="2526.4" y="3456" width="561.6" height="54.6" rx="0" fill="#eaf3fc" stroke="#cad5df" stroke-width="2"/>
+<text x="2538.4" y="3489.68" font-family="Arial,Helvetica,sans-serif" font-size="22" text-anchor="start" fill="#2463a6">Answer to understand</text>
+<rect x="2152" y="3510.6" width="374.40000000000003" height="54.6" rx="0" fill="#ffffff" stroke="#cad5df" stroke-width="2"/>
+<text x="2164" y="3544.2799999999997" font-family="Arial,Helvetica,sans-serif" font-size="22" text-anchor="start" fill="#183044">Why create a CA?</text>
+<rect x="2526.4" y="3510.6" width="561.6" height="54.6" rx="0" fill="#ffffff" stroke="#cad5df" stroke-width="2"/>
+<text x="2538.4" y="3544.2799999999997" font-family="Arial,Helvetica,sans-serif" font-size="22" text-anchor="start" fill="#183044">So our client can check a signed name-to-key link.</text>
+<rect x="2152" y="3565.2" width="374.40000000000003" height="54.6" rx="0" fill="#f0f3f6" stroke="#cad5df" stroke-width="2"/>
+<text x="2164" y="3598.8799999999997" font-family="Arial,Helvetica,sans-serif" font-size="22" text-anchor="start" fill="#183044">Certificate vs private key?</text>
+<rect x="2526.4" y="3565.2" width="561.6" height="54.6" rx="0" fill="#f0f3f6" stroke="#cad5df" stroke-width="2"/>
+<text x="2538.4" y="3598.8799999999997" font-family="Arial,Helvetica,sans-serif" font-size="22" text-anchor="start" fill="#183044">Public ID vs secret proof of owning that ID.</text>
+<rect x="2152" y="3619.7999999999997" width="374.40000000000003" height="83.2" rx="0" fill="#ffffff" stroke="#cad5df" stroke-width="2"/>
+<text x="2164" y="3653.4799999999996" font-family="Arial,Helvetica,sans-serif" font-size="22" text-anchor="start" fill="#183044">Why RSA cannot open 1.3?</text>
+<rect x="2526.4" y="3619.7999999999997" width="561.6" height="83.2" rx="0" fill="#ffffff" stroke="#cad5df" stroke-width="2"/>
+<text x="2538.4" y="3653.4799999999996" font-family="Arial,Helvetica,sans-serif" font-size="22" text-anchor="start" fill="#183044">It is the identity key. Separate temporary secrets made</text>
+<text x="2538.4" y="3682.0799999999995" font-family="Arial,Helvetica,sans-serif" font-size="22" text-anchor="start" fill="#183044">the data keys.</text>
+<rect x="2152" y="3702.9999999999995" width="374.40000000000003" height="54.6" rx="0" fill="#f0f3f6" stroke="#cad5df" stroke-width="2"/>
+<text x="2164" y="3736.6799999999994" font-family="Arial,Helvetica,sans-serif" font-size="22" text-anchor="start" fill="#183044">Why the key log opens it?</text>
+<rect x="2526.4" y="3702.9999999999995" width="561.6" height="54.6" rx="0" fill="#f0f3f6" stroke="#cad5df" stroke-width="2"/>
+<text x="2538.4" y="3736.6799999999994" font-family="Arial,Helvetica,sans-serif" font-size="22" text-anchor="start" fill="#183044">The endpoint exported that connection's secrets.</text>
+<rect x="2152" y="3757.5999999999995" width="374.40000000000003" height="54.6" rx="0" fill="#ffffff" stroke="#cad5df" stroke-width="2"/>
+<text x="2164" y="3791.2799999999993" font-family="Arial,Helvetica,sans-serif" font-size="22" text-anchor="start" fill="#183044">Why fake server rejected?</text>
+<rect x="2526.4" y="3757.5999999999995" width="561.6" height="54.6" rx="0" fill="#ffffff" stroke="#cad5df" stroke-width="2"/>
+<text x="2538.4" y="3791.2799999999993" font-family="Arial,Helvetica,sans-serif" font-size="22" text-anchor="start" fill="#183044">Right name, untrusted signature. No witness sent.</text>
+<rect x="2152" y="3812.1999999999994" width="374.40000000000003" height="54.6" rx="0" fill="#f0f3f6" stroke="#cad5df" stroke-width="2"/>
+<text x="2164" y="3845.879999999999" font-family="Arial,Helvetica,sans-serif" font-size="22" text-anchor="start" fill="#183044">Why --insecure leaks?</text>
+<rect x="2526.4" y="3812.1999999999994" width="561.6" height="54.6" rx="0" fill="#f0f3f6" stroke="#cad5df" stroke-width="2"/>
+<text x="2538.4" y="3845.879999999999" font-family="Arial,Helvetica,sans-serif" font-size="22" text-anchor="start" fill="#183044">The client encrypts for an unverified recipient.</text>
+<rect x="2152" y="3884.7999999999993" width="936" height="91.80000000000001" rx="14" fill="#f3eefa" stroke="#7151a8" stroke-width="2"/>
+<text x="2170" y="3922.419999999999" font-family="Arial,Helvetica,sans-serif" font-size="23" text-anchor="start" fill="#183044">Keep secret: CA / server / SSH private keys and connection key logs. A capture with</text>
+<text x="2170" y="3952.3199999999993" font-family="Arial,Helvetica,sans-serif" font-size="23" text-anchor="start" fill="#183044">embedded secrets also exposes the recorded content.</text>
+<rect x="2152" y="3994.5999999999995" width="936" height="94.4" rx="14" fill="#fff6df" stroke="#9a650b" stroke-width="2"/>
+<text x="2170" y="4033.1599999999994" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">SAY IT We compared visible content, verified identity, and secret-assisted decryption</text>
+<text x="2170" y="4064.359999999999" font-family="Arial,Helvetica,sans-serif" font-size="24" text-anchor="start" fill="#183044">on local services.</text>
+<text x="2152" y="4226.8" font-family="Arial,Helvetica,sans-serif" font-size="20" text-anchor="start" fill="#506479">Saved results: 27 PASS checks. Study material only. See TLS-GUIDE.md for evidence and limits.</text>
+<text x="48" y="4312.68" font-family="Arial,Helvetica,sans-serif" font-size="22" text-anchor="start" fill="#506479">Scope: existing local lab only. Saved checks were inspected, not rerun. No new experiments or enrichment research.</text>
+<text x="48" y="4352.68" font-family="Arial,Helvetica,sans-serif" font-size="22" text-anchor="start" fill="#506479">Protocol references and command details: TLS-GUIDE.md. No private keys, passwords or key-log contents are embedded in this board.</text>
+</svg>

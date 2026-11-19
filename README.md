@@ -2,9 +2,11 @@
 
 A reproducible lab that compares Telnet, HTTP, SSH and TLS in Wireshark, with an automatic check for every observation.
 
-Cybersecurity project by Mohamed Reguigui and Firas Taktak, due 15 November 2026. The full plan, method and sources are in [PLAN.md](PLAN.md).
+Cybersecurity project by Mohamed Reguigui and Firas Taktak. The full plan, method and sources are in [PLAN.md](PLAN.md).
 
-Clients, servers and captures share the loopback interface of a Kali WSL distro. One command creates the certificates, starts each service, captures the session, then uses TShark to check what is readable and what is not.
+Clients and servers exchange traffic in a Kali WSL lab on one machine. One command creates the certificates, starts each service, captures the session, then uses TShark to check what is readable and what is not.
+
+Study the certificate and TLS tests with the [plain-English guide](docs/TLS-GUIDE.md) and its [editable Excalidraw board](docs/tls-explained.excalidraw). A [browser-readable SVG](docs/tls-explained.svg) is also available.
 
 ## Run it
 
@@ -67,8 +69,14 @@ sudo bash lab.sh tls13 tls12
 | `fake` | 9443 | The verifying client rejects the fake certificate and sends nothing. With `--insecure`, the fake server receives the witness text. |
 | `versions` | 8450-8453 | TLS 1.0, 1.1, 1.2 and 1.3 negotiated. The certificate is readable up to TLS 1.2 and encrypted in TLS 1.3. curl refuses TLS 1.0 by default. This OpenSSL has no SSL 3.0. |
 | `bot` | 8460 | curl and Python keep their JA4 fingerprint when they claim a Firefox User-Agent. A detector that compares the two flags both fake browsers. |
+| `mitm` | 8470, 8471 | A trusted TLS proxy changes the response. An untrusted proxy is rejected. Pinning the original server public key rejects the proxy even when its CA is trusted. Both legs use TLS 1.3. |
+| `mtls` | 8480 | The server rejects a client with no certificate or an untrusted certificate. A client with a Lab CA certificate receives the file. |
 
 The TLS 1.3 and TLS 1.2 servers share one RSA key. It decrypts the TLS 1.2 session and not the TLS 1.3 one, which isolates the effect of static RSA key exchange.
+
+The [interception and pinning guide](docs/GUIDE-mitmproxy.md) explains the `mitm` test, manual commands, mitmweb and the two Wireshark views. Run it alone with `sudo bash lab.sh mitm`.
+
+Run mutual TLS alone with `sudo bash lab.sh mtls`. The client verifies the server certificate and the server requires a client certificate signed by the Lab CA. Results and client errors are in `out/evidence/mtls-*.txt`, and the capture is `out/captures/mtls.pcapng`.
 
 ## Output
 
@@ -78,6 +86,7 @@ The TLS 1.3 and TLS 1.2 servers share one RSA key. It decrypts the TLS 1.2 sessi
 | `out/captures/*.pcapng` | One original capture per test, without embedded secrets. |
 | `out/captures/tls13-with-keys.pcapng` | The TLS 1.3 session with its key log embedded, so it opens already decrypted. |
 | `out/evidence/` | Tool versions, client outputs, fake server log, testssl.sh reports, JA4 per connection and the detector's verdicts. |
+| `out/evidence/mitm.flows` | The completed intercepted HTTP flow, readable in mitmweb. |
 | `out/secrets/` | The lab's throwaway CA, keys and key log, regenerated on every run. |
 
 ## Wireshark on Windows
@@ -98,10 +107,11 @@ Clear both TLS settings before the next observations, or use one Wireshark profi
 | [`lab.sh`](lab.sh) | Setup, services, captures and checks, one function per test. |
 | [`setup.sh`](setup.sh) | Packages and the `labuser` test account. |
 | [`config/`](config/) | `inetd.conf` for Telnet, `sshd_config` for the lab's SSH instance. |
+| [`config/modify_response.py`](config/modify_response.py) | mitmproxy addon that replaces the witness text in responses. |
 | [`fixtures/www/`](fixtures/www/) | Witness file `PROJET_TLS_MOHAMED_FIRAS`. |
 | [`.github/workflows/lab.yml`](.github/workflows/lab.yml) | Replays the lab in a Kali image on every push and keeps `out/` as an artifact. |
 | [`AGENTS.md`](AGENTS.md) | Rules for AI assistants. |
 
 ## Built with
 
-OpenSSL, OpenSSH, inetutils telnetd, Python `http.server`, curl, TShark and dumpcap, testssl.sh, all from Kali packages. Each run records the exact versions in `out/evidence/versions.txt`.
+OpenSSL, OpenSSH, inetutils telnetd, Python `http.server`, curl, TShark and dumpcap, testssl.sh and mitmproxy, all from Kali packages. Each run records the exact versions in `out/evidence/versions.txt`.

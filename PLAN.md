@@ -62,6 +62,7 @@ The `labuser` test account has no privileges and a fake password. The Telnet and
 | Python `http.server` | Serve the witness file over HTTP. |
 | curl | Test HTTP and HTTPS with certificate verification. |
 | testssl.sh | Check the versions and suites offered by our own TLS servers. It audits, it does not decrypt. |
+| mitmproxy / mitmweb | Intercept and edit a local HTTPS response between two TLS connections, then show public-key pinning rejecting the proxy. |
 
 We use the installed versions and record them. No home-made cryptographic code is needed.
 
@@ -128,7 +129,7 @@ The weakness shown is precise: if the server's private key is compromised, old r
 
 Repeat the comparison with our TLS 1.3 session, which uses an ephemeral exchange: the certificate's private key alone does not allow the same decryption. Use a session without a key log and a clean profile. Test 6 stays separate, because session secrets do allow decryption. [1][4]
 
-OpenSSL in Kali negotiates suite `0x009c` without lowering its security level. The system-wide configuration is untouched. Cross-check: with the suite ECDHE-RSA-AES128-GCM-SHA256 on the same server, the same private key decrypts nothing.
+OpenSSL in Kali negotiates suite `0x009c` without lowering its security level. The system-wide configuration is untouched.
 
 ### Test 8 - Bad certificate verification
 
@@ -137,6 +138,20 @@ Start a local fake server with another certificate outside the client's trust. A
 Repeat with verification deliberately turned off, `curl --insecure`, only against this lab server. Show that the fake server then receives the test text, even though the connection is encrypted. Then go back to the verifying client and show the refusal.
 
 The conclusion is that encryption alone does not guarantee who the recipient is. This test shows the impersonation risk when verification is off. Without a transparent proxy or network redirection, we present it as a fake server test, not as a full MITM interception. [5]
+
+### Test 9 - Trusted interception and public-key pinning
+
+Put mitmproxy in front of a local OpenSSL server. The server listens on `127.0.0.1:8470`. The proxy listens on `127.0.0.1:8471` and verifies the server with the Lab CA. Both connections use TLS 1.3.
+
+First, the client trusts only the Lab CA and rejects the proxy certificate. Next, give that curl invocation the proxy CA. The proxy changes the witness response to `MODIFIED_IN_TRANSIT`, and curl receives it. Finally, keep the proxy CA trusted but require the original server public key with `--pinnedpubkey`. curl rejects the proxy with code 90. A direct request with that same pin succeeds.
+
+Capture both connections. Without secrets, neither witness text is readable in the capture. With the proxy's key log, TShark recovers the original response on port 8470 and the modified response on port 8471. Every observation has a check in `t_mitm()`.
+
+This is explicit local reverse proxying. It shows two separate TLS connections with a trusted endpoint between them. No encryption is broken, no transparent network interception is claimed, and no CA is installed globally. The manual reproduction is in [docs/GUIDE-mitmproxy.md](docs/GUIDE-mitmproxy.md).
+
+### Test 10 - Mutual TLS
+
+The client verifies the server certificate and the server requires a client certificate signed by the Lab CA. A request without a client certificate fails. A request with a self-signed client certificate also fails. A client with a Lab CA-signed certificate receives the witness file. The test captures the exchanges and checks that the witness text is absent from the capture. Certificates and keys are throwaway lab material.
 
 ## 7. What we will explain about TLS
 
