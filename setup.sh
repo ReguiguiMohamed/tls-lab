@@ -5,7 +5,7 @@ set -eu
 apt-get update
 DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
   curl expect inetutils-inetd inetutils-telnet inetutils-telnetd iputils-ping \
-  openssh-client openssh-server openssl python3 testssl.sh tshark
+  mitmproxy openssh-client openssh-server openssl python3 testssl.sh tshark
 
 # The telnetd package registers a system-wide Telnet on port 23. lab.sh starts its own on
 # 127.0.0.1:2323 only while the test runs, so the system one stays off.
